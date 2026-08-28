@@ -65,7 +65,7 @@ public static class Catalogue
         new("windows-old", CleanupCategory.Windows,
             "Previous Windows installation",
             "The Windows.old folder left by a feature update or an upgrade.",
-            "You will not be able to go back to your previous version of Windows. Windows removes this on its own after ten days.",
+            "You will not be able to go back to your previous version of Windows - and it also holds a complete copy of the old user profiles, so anything you have not moved across yet goes with it. Windows removes this on its own after ten days.",
             CleanupRisk.Irreversible, TickedByDefault: false, NeedsAdmin: true),
 
         // ── Browsers ───────────────────────────────────────────────────────────────────────

@@ -1,3 +1,5 @@
+using CleanGeek.Core.Models;
+
 namespace CleanGeek.Core.Services;
 
 /// <summary>
@@ -8,28 +10,45 @@ namespace CleanGeek.Core.Services;
 /// is unsure rather than allowing when it cannot decide, because the failure mode on the other
 /// side of this function is somebody's documents.
 ///
-/// The system-folder rules are structural rather than a suffix match, and that is not fussiness:
-/// a suffix match on "\windows" would refuse C:\Windows.old\Windows, which is the largest folder
-/// inside a target the application legitimately cleans. Position in the path is what makes a
-/// folder a system folder, so position is what is checked.
+/// There are two independent halves, and the second exists because the first can be wrong:
+///
+///   The ALLOW half - the path must sit under one of the roots the caller passed in.
+///   The REFUSE half - a list of places that are never deleted from, whatever roots were passed.
+///
+/// The refuse half is what catches a mistake in the roots, so it has to hold for a whole subtree
+/// and not merely for the folder itself: refusing C:\Users\Sam\Documents while allowing
+/// C:\Users\Sam\Documents\tax.pdf would be no protection at all.
+///
+/// Two names are deliberately refused as the folder ONLY, not as a subtree: the Windows folder
+/// and Users. Real cleanup targets live underneath both of them - Windows\Temp, the update
+/// download cache, the memory dump, and every per-user cache - so a subtree refusal there would
+/// refuse the application's own work. Underneath them the specific dangerous children are named
+/// instead, and those ARE subtree refusals.
+///
+/// The name checks are positional rather than a suffix match, which is why C:\Windows is refused
+/// while C:\Windows.old\Windows - the largest folder inside a target the application legitimately
+/// cleans - is not.
 /// </summary>
 public static class PathSafety
 {
-    /// <summary>Directly under a drive root, these are never touched.</summary>
-    private static readonly string[] AtDriveRoot =
+    /// <summary>Refused as the folder itself. Legitimate targets live underneath these.</summary>
+    private static readonly string[] DriveRootFolderOnly = ["windows", "users"];
+
+    /// <summary>Refused along with everything underneath them, at the root of any drive.</summary>
+    private static readonly string[] DriveRootSubtree =
     [
-        "windows", "program files", "program files (x86)", "programdata",
-        "users", "$recycle.bin", "system volume information", "perflogs", "recovery"
+        "program files", "program files (x86)", "programdata",
+        "$recycle.bin", "system volume information", "perflogs", "recovery"
     ];
 
-    /// <summary>Directly under the Windows folder, these are never touched.</summary>
-    private static readonly string[] UnderWindows =
+    /// <summary>Refused along with everything underneath them, directly under the Windows folder.</summary>
+    private static readonly string[] WindowsSubtree =
     [
         "system32", "syswow64", "winsxs", "servicing", "boot", "fonts", "prefetch", "system"
     ];
 
-    /// <summary>Directly under a user's profile, these are never touched.</summary>
-    private static readonly string[] UnderProfile =
+    /// <summary>Refused along with everything underneath them, directly under a user's profile.</summary>
+    private static readonly string[] ProfileSubtree =
     [
         "documents", "desktop", "downloads", "pictures", "videos", "music",
         "onedrive", "favorites", "links", "searches", "contacts", "saved games"
@@ -46,7 +65,7 @@ public static class PathSafety
 
         var p = Normalise(path);
 
-        if (HasSegment(p, ".."))
+        if (Segments(p).Any(s => s == ".."))
             return "The path walks upwards out of its folder.";
 
         if (!IsRooted(p))
@@ -82,10 +101,33 @@ public static class PathSafety
     public static bool IsSafeToDelete(string? path, IReadOnlyList<string> allowedRoots) =>
         Refuse(path, allowedRoots) is null;
 
+    /// <summary>
+    /// The refusal for one file against one specification - the form the cleaner actually uses.
+    ///
+    /// This exists because handing PathSafety a target's roots all at once is too generous. The
+    /// memory dump lives at C:\Windows\MEMORY.DMP, so its root is the Windows folder; approving
+    /// everything under that root would approve the whole operating system, and only the narrowness
+    /// of the enumeration would be keeping it safe. A specification that names one file authorises
+    /// exactly that file.
+    /// </summary>
+    public static string? RefuseForSpec(string? path, CleanupPath spec)
+    {
+        if (Refuse(path, [spec.Root]) is { } reason) return reason;
+
+        if (!spec.IsSingleNamedFile) return null;
+
+        var name = Segments(Normalise(path!)).LastOrDefault() ?? "";
+        return string.Equals(name, spec.Pattern, StringComparison.OrdinalIgnoreCase)
+            ? null
+            : $"{path} is not the file this target names ({spec.Pattern}).";
+    }
+
+    public static bool IsSafeForSpec(string? path, CleanupPath spec) => RefuseForSpec(path, spec) is null;
+
     /// <summary>Why this path is a system folder, or null when it is not one.</summary>
     private static string? SystemFolder(string p)
     {
-        var parts = p.Split('\\', StringSplitOptions.RemoveEmptyEntries);
+        var parts = Segments(p);
 
         // A volume's own hidden folders turn up at the root of every drive, so they are refused
         // wherever they appear rather than only on the system drive.
@@ -93,27 +135,37 @@ public static class PathSafety
             if (Is(part, "$recycle.bin") || Is(part, "system volume information"))
                 return "is a folder Windows owns and CleanGeek never deletes.";
 
-        // parts[0] is the drive ("C:") or, on a UNC path, the server name.
-        if (parts.Length == 2 && AtDriveRoot.Any(x => Is(parts[1], x)))
+        // parts[0] is the drive ("C:"); on a UNC path the server and the share take two slots,
+        // so everything below is indexed from the first real folder rather than from zero.
+        var first = p.StartsWith(@"\\", StringComparison.Ordinal) ? 2 : 1;
+        if (parts.Length <= first) return null;
+
+        if (DriveRootSubtree.Any(x => Is(parts[first], x)))
+            return "is inside a system folder CleanGeek never deletes.";
+
+        if (parts.Length == first + 1 && DriveRootFolderOnly.Any(x => Is(parts[first], x)))
             return "is a system folder CleanGeek never deletes.";
 
-        if (parts.Length == 3 && Is(parts[1], "windows") && UnderWindows.Any(x => Is(parts[2], x)))
+        if (parts.Length > first + 1 && Is(parts[first], "windows")
+            && WindowsSubtree.Any(x => Is(parts[first + 1], x)))
             return "is part of Windows itself.";
 
-        // C:\Users\Sam - the profile root. Its contents are fair game, the folder is not.
-        if (parts.Length == 3 && Is(parts[1], "users"))
-            return "is somebody's profile folder.";
+        if (Is(parts[first], "users"))
+        {
+            // C:\Users\Sam - the profile root. Its caches are fair game, the folder is not.
+            if (parts.Length == first + 2)
+                return "is somebody's profile folder.";
 
-        if (parts.Length == 4 && Is(parts[1], "users") && UnderProfile.Any(x => Is(parts[3], x)))
-            return "is one of your own folders, not a cache.";
+            if (parts.Length > first + 2 && ProfileSubtree.Any(x => Is(parts[first + 2], x)))
+                return "is one of your own folders, not a cache.";
+        }
 
         return null;
     }
 
     private static bool Is(string a, string b) => string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
 
-    private static bool HasSegment(string p, string segment) =>
-        p.Split('\\').Any(s => string.Equals(s, segment, StringComparison.Ordinal));
+    private static string[] Segments(string p) => p.Split('\\', StringSplitOptions.RemoveEmptyEntries);
 
     private static string Normalise(string path)
     {
@@ -123,6 +175,14 @@ public static class PathSafety
         var body = unc ? p[2..] : p;
         while (body.Contains(@"\\", StringComparison.Ordinal))
             body = body.Replace(@"\\", @"\", StringComparison.Ordinal);
+
+        // Windows silently drops trailing dots and spaces from every component, so "System32."
+        // opens System32. Dropping them here too means the name checks below cannot be stepped
+        // around by adding one. A component that is nothing but dots is left alone, because that
+        // is "." or ".." and the upwards-walk check still has to be able to see it.
+        body = string.Join('\\', body.Split('\\')
+            .Select(s => s.Length > 0 && s.All(c => c == '.') ? s : s.TrimEnd(' ', '.')));
+
         p = unc ? @"\\" + body : body;
 
         return p.Length > 3 ? p.TrimEnd('\\') : p;
