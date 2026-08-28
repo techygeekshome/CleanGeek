@@ -35,8 +35,8 @@ public static class ScheduleTests
         Check.That("has no clean switch at all", !daily.Contains("--clean", StringComparison.Ordinal));
         Check.That("overwrites an existing task", daily.Contains("/f", StringComparison.Ordinal));
 
-        // Deliberately different from DriverGeek: a scan needs no elevation, and a task that asks
-        // for rights it does not need is a task that fails on a standard account for no reason.
+        // A scan needs no elevation, and asking for rights it does not need would fail on a
+        // standard account.
         Check.That("does not ask for the highest run level",
             !daily.Contains("/rl", StringComparison.OrdinalIgnoreCase));
         Check.That("never supplies a password", !daily.Contains("/rp", StringComparison.OrdinalIgnoreCase));

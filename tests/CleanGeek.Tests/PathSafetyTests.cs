@@ -88,8 +88,7 @@ public static class PathSafetyTests
 
         Check.Section("PathSafety - a system folder protects its CONTENTS, not just its name");
 
-        // The bug this section exists for: refusing C:\Windows\System32 while allowing the files
-        // inside it is not protection, it is the appearance of protection.
+        // A refusal has to cover the subtree, not only the folder name itself.
         Check.That("refuses a file inside System32",
             !PathSafety.IsSafeToDelete(@"C:\Windows\System32\ntoskrnl.exe", anything));
         Check.That("refuses a file deep inside System32",
@@ -113,8 +112,7 @@ public static class PathSafetyTests
 
         Check.Section("PathSafety - but the real targets underneath Windows still work");
 
-        // Windows and Users are refused as folders, never as subtrees, because the application's
-        // own targets live underneath both. Getting this wrong in either direction is a bug.
+        // Windows and Users are refused as folders only, since real targets live beneath them.
         Check.That("allows the Windows Temp folder's contents",
             PathSafety.IsSafeToDelete(@"C:\Windows\Temp\x.tmp", [@"C:\Windows\Temp"]));
         Check.That("allows the update download cache",

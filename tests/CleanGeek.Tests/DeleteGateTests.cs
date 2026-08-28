@@ -59,8 +59,7 @@ public static class DeleteGateTests
 
         Check.Section("DeleteGate - refusal order");
 
-        // Every one of these is wrong at once. The scheduled run is the reason reported, because
-        // it is the one the person most needs to understand.
+        // All the conditions fail at once; the order decides which reason is reported.
         var everythingWrong = new DeleteContext(false, false, true, true, false, true);
         Check.That("reports the scheduled run first",
             DeleteGate.Refuse(Temp, everythingWrong)!.Contains("scheduled", StringComparison.OrdinalIgnoreCase));
