@@ -32,9 +32,8 @@ This is the other category with a deservedly poor reputation, so again, plainly:
 
 - **There is no registry cleaner, and there will not be one.** It is the headline feature of
   every product in this space and it does not work. Registry cleaning has no measurable benefit
-  on any Windows version this decade, Microsoft does not endorse the practice, and the failure
-  mode is a machine that will not boot. The upside is zero. We are not shipping it for the sake
-  of a bullet point.
+  on any Windows version this decade, and the failure mode is a machine that will not boot.
+  The upside is zero. We are not shipping it for the sake of a bullet point.
 - **Saved passwords are not a cleanup target.** Not off by default — not present at all.
 - **Cookies, history and saved form data are off by default**, and each one says in plain words
   what clearing it will cost you before you tick it.
