@@ -1,26 +1,19 @@
 namespace CleanGeek.Core.Services;
 
-/// <summary>A scheduled scan, turned into something schtasks.exe understands.</summary>
+/// <summary>A scheduled scan expressed in schtasks.exe terms.</summary>
 public sealed record ScanPlan(bool NeedsScheduledTask, string Describe, string Frequency, string StartTime, string Day)
 {
     public static ScanPlan Manual() => new(false, "Only when you press Scan", "", "", "");
 }
 
 /// <summary>
-/// The same shape as AppGeek's and DriverGeek's schedulers, with two deliberate differences.
+/// Builds the schtasks command lines for the scheduled scan. The task runs "--scan"; there is no
+/// command line that cleans.
 ///
-/// First, the task runs "--scan" and there is no command line that cleans. A scheduled run
-/// measures and writes a line to the log; DeleteGate refuses everything when the run is
-/// unattended, so even a hand-edited task cannot turn a schedule into a deletion.
-///
-/// Second, no /RL HIGHEST. DriverGeek asks for it because its manifest requires administrator;
-/// CleanGeek's does not, a scan of the places that matter needs no elevation, and a task that
-/// asks for rights it does not need is a task that fails on a standard account for no reason.
-///
-/// The rest is the same, for the same reasons: no /RU or /RP (registers for the current account,
-/// runs only when logged on, never prompts for a password) and a flat task name with no folder
-/// (schtasks will not create one, and a path into a folder that does not exist registers nothing
-/// at all).
+/// No /RL HIGHEST: a scan needs no elevation, and asking for rights it does not need makes the
+/// task fail on a standard account. No /RU or /RP, so it registers for the current account and
+/// never prompts for a password. The task name is flat, because schtasks will not create a
+/// folder and a path into one that does not exist registers nothing.
 /// </summary>
 public static class CleanSchedule
 {
@@ -42,9 +35,8 @@ public static class CleanSchedule
     }
 
     /// <summary>
-    /// The schtasks command line. Returns empty when the choice needs no task, which is also the
-    /// signal to REMOVE any task already registered - switching to "Manually only" must not leave
-    /// an orphan behind.
+    /// The schtasks create command line. Empty when no task is needed, which also signals that any
+    /// already-registered task should be removed.
     /// </summary>
     public static string CreateCommand(ScanPlan plan, string exePath)
     {

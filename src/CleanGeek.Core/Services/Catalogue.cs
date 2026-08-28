@@ -2,18 +2,14 @@ using CleanGeek.Core.Models;
 
 namespace CleanGeek.Core.Services;
 
-/// <summary>
-/// Everything CleanGeek is willing to delete, and - just as important - everything it refuses to.
-/// The list is fixed and small on purpose. A cleaner with two hundred targets is a cleaner nobody
-/// has read, and the ones nobody has read are the ones that delete something that mattered.
-/// </summary>
+/// <summary>The fixed list of cleanup targets, and the list of things that are never cleaned.</summary>
 public static class Catalogue
 {
     public const string RecycleBinId = "recycle-bin";
 
     public static IReadOnlyList<CleanupTarget> All { get; } =
     [
-        // ── Windows ────────────────────────────────────────────────────────────────────────
+        // Windows
         new("temp-user", CleanupCategory.Windows,
             "Your temporary files",
             "The TEMP folder in your own profile, where installers and applications leave working files behind.",
@@ -68,7 +64,7 @@ public static class Catalogue
             "You will not be able to go back to your previous version of Windows - and it also holds a complete copy of the old user profiles, so anything you have not moved across yet goes with it. Windows removes this on its own after ten days.",
             CleanupRisk.Irreversible, TickedByDefault: false, NeedsAdmin: true),
 
-        // ── Browsers ───────────────────────────────────────────────────────────────────────
+        // Browsers
         new("browser-cache", CleanupCategory.Browsers,
             "Browser caches",
             "Copies of pages and images your browsers kept so they load faster the second time.",
@@ -99,7 +95,7 @@ public static class Catalogue
             "The list only. The downloaded files themselves are never touched.",
             CleanupRisk.Disposable, TickedByDefault: false),
 
-        // ── Recycle Bin ────────────────────────────────────────────────────────────────────
+        // Recycle Bin
         new(RecycleBinId, CleanupCategory.Bin,
             "Recycle Bin",
             "Everything you have deleted and not yet emptied.",
@@ -107,10 +103,7 @@ public static class Catalogue
             CleanupRisk.Irreversible, TickedByDefault: false)
     ];
 
-    /// <summary>
-    /// The refusals, in the same place as the targets so nobody has to go looking for them. Each
-    /// one is a thing a competitor cleans and CleanGeek will not.
-    /// </summary>
+    /// <summary>Things this application deliberately never cleans, with the reason shown in the UI.</summary>
     public static IReadOnlyList<(string Thing, string Why)> NeverCleaned { get; } =
     [
         ("Saved passwords",
@@ -135,17 +128,13 @@ public static class Catalogue
     public static IReadOnlyList<CleanupTarget> InCategory(CleanupCategory category) =>
         All.Where(t => t.Category == category).ToList();
 
-    /// <summary>Caches and temporary files, and nothing that costs the person anything.</summary>
+    /// <summary>The default tick set. Nothing with a cost to the user is ticked by default.</summary>
     public static IReadOnlyList<string> DefaultSelection() =>
         All.Where(t => t.TickedByDefault).Select(t => t.Id).ToList();
 
     /// <summary>
-    /// Turns what is in settings.json into the set of ticked ids.
-    ///
-    /// Null means the person has never chosen, so the defaults apply. An EMPTY list means they
-    /// chose to tick nothing, which is a real choice and is not quietly overwritten with the
-    /// defaults - getting that backwards would silently re-tick things somebody deliberately
-    /// turned off. Unknown ids from a newer or older version are dropped rather than carried.
+    /// Resolves the saved selection into ticked ids. Null means never chosen, so defaults apply;
+    /// an empty list is a real choice and is not replaced by the defaults. Unknown ids are dropped.
     /// </summary>
     public static IReadOnlyList<string> Resolve(IReadOnlyList<string>? saved)
     {

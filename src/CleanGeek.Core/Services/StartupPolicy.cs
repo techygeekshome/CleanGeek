@@ -2,20 +2,12 @@ using CleanGeek.Core.Models;
 
 namespace CleanGeek.Core.Services;
 
-/// <summary>
-/// What CleanGeek says about a thing that starts with Windows.
-///
-/// Note what is missing: a "startup impact" score. Windows measures that itself over several
-/// boots and CleanGeek cannot, so inventing one would be a guess dressed as a measurement -
-/// which is the habit this range exists to avoid. What CleanGeek can honestly do is tell you
-/// what an entry is, where it starts from, and when turning it off would be a bad idea.
-/// </summary>
+/// <summary>Rules for describing and disabling startup entries.</summary>
 public static class StartupPolicy
 {
     /// <summary>
-    /// Things that should almost always be left alone. Matched loosely against the entry name,
-    /// its publisher and its command, because the same thing appears under different names on
-    /// different machines.
+    /// Entries that should normally be left enabled. Matched as substrings against name, publisher
+    /// and command, since the same software is named differently on different machines.
     /// </summary>
     private static readonly (string Needle, string Why)[] LeaveOn =
     [
@@ -51,11 +43,7 @@ public static class StartupPolicy
 
     public static bool ShouldWarnBeforeDisabling(StartupEntry entry) => ReasonToKeep(entry) is not null;
 
-    /// <summary>
-    /// Whether CleanGeek will disable this entry if asked. It never disables anything on its own,
-    /// and a machine-wide entry needs administrator rights, because the alternative is a change
-    /// that silently does not happen.
-    /// </summary>
+    /// <summary>The reason this entry may not be disabled, or null when it may.</summary>
     public static string? RefuseDisable(StartupEntry entry, bool elevated, bool unattended)
     {
         if (unattended)

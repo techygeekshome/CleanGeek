@@ -3,35 +3,12 @@ using CleanGeek.Core.Models;
 namespace CleanGeek.Core.Services;
 
 /// <summary>
-/// The guard that stands between a target and the file system.
-///
-/// Every path CleanGeek is about to delete goes through here first, and the answer is no unless
-/// the path is provably inside somewhere the application was told it may work. It refuses when it
-/// is unsure rather than allowing when it cannot decide, because the failure mode on the other
-/// side of this function is somebody's documents.
-///
-/// There are two independent halves, and the second exists because the first can be wrong:
-///
-///   The ALLOW half - the path must sit under one of the roots the caller passed in.
-///   The REFUSE half - a list of places that are never deleted from, whatever roots were passed.
-///
-/// The refuse half is what catches a mistake in the roots, so it has to hold for a whole subtree
-/// and not merely for the folder itself: refusing C:\Users\Sam\Documents while allowing
-/// C:\Users\Sam\Documents\tax.pdf would be no protection at all.
-///
-/// Two names are deliberately refused as the folder ONLY, not as a subtree: the Windows folder
-/// and Users. Real cleanup targets live underneath both of them - Windows\Temp, the update
-/// download cache, the memory dump, and every per-user cache - so a subtree refusal there would
-/// refuse the application's own work. Underneath them the specific dangerous children are named
-/// instead, and those ARE subtree refusals.
-///
-/// The name checks are positional rather than a suffix match, which is why C:\Windows is refused
-/// while C:\Windows.old\Windows - the largest folder inside a target the application legitimately
-/// cleans - is not.
+/// Decides whether a path may be deleted. A path must sit under one of the caller's allowed roots
+/// and must not be a system location; unknown cases are refused.
 /// </summary>
 public static class PathSafety
 {
-    /// <summary>Refused as the folder itself. Legitimate targets live underneath these.</summary>
+    /// <summary>Refused as the folder itself only, since real targets live beneath these.</summary>
     private static readonly string[] DriveRootFolderOnly = ["windows", "users"];
 
     /// <summary>Refused along with everything underneath them, at the root of any drive.</summary>
@@ -54,10 +31,7 @@ public static class PathSafety
         "onedrive", "favorites", "links", "searches", "contacts", "saved games"
     ];
 
-    /// <summary>
-    /// The refusal reason, or null when the path may be deleted. Callers show this text, so it is
-    /// written to be read by a person rather than logged and forgotten.
-    /// </summary>
+    /// <summary>The refusal reason, or null when the path may be deleted. Shown to the user.</summary>
     public static string? Refuse(string? path, IReadOnlyList<string> allowedRoots)
     {
         if (string.IsNullOrWhiteSpace(path))
@@ -85,8 +59,7 @@ public static class PathSafety
             var r = Normalise(root);
             if (r.Length == 0 || !IsRooted(r)) continue;
 
-            // Equal to the root means "delete the folder itself", which is never what is wanted:
-            // CleanGeek empties folders, it does not remove them.
+            // Roots are emptied, never removed.
             if (string.Equals(p, r, StringComparison.OrdinalIgnoreCase))
                 return "That is the folder itself, not something inside it.";
 
@@ -102,13 +75,8 @@ public static class PathSafety
         Refuse(path, allowedRoots) is null;
 
     /// <summary>
-    /// The refusal for one file against one specification - the form the cleaner actually uses.
-    ///
-    /// This exists because handing PathSafety a target's roots all at once is too generous. The
-    /// memory dump lives at C:\Windows\MEMORY.DMP, so its root is the Windows folder; approving
-    /// everything under that root would approve the whole operating system, and only the narrowness
-    /// of the enumeration would be keeping it safe. A specification that names one file authorises
-    /// exactly that file.
+    /// The refusal for one file against one spec. A spec naming a single file authorises only that
+    /// file, so a broad root such as the Windows folder cannot approve everything beneath it.
     /// </summary>
     public static string? RefuseForSpec(string? path, CleanupPath spec)
     {
@@ -129,14 +97,14 @@ public static class PathSafety
     {
         var parts = Segments(p);
 
-        // A volume's own hidden folders turn up at the root of every drive, so they are refused
-        // wherever they appear rather than only on the system drive.
+        // These exist on every volume, so match them at any depth.
         foreach (var part in parts)
             if (Is(part, "$recycle.bin") || Is(part, "system volume information"))
                 return "is a folder Windows owns and CleanGeek never deletes.";
 
-        // parts[0] is the drive ("C:"); on a UNC path the server and the share take two slots,
-        // so everything below is indexed from the first real folder rather than from zero.
+        // Names are matched by position, not by suffix, so C:\Windows is refused but
+        // C:\Windows.old\Windows is not. parts[0] is the drive; a UNC path spends two
+        // segments on server and share, so index from the first real folder.
         var first = p.StartsWith(@"\\", StringComparison.Ordinal) ? 2 : 1;
         if (parts.Length <= first) return null;
 
@@ -152,7 +120,7 @@ public static class PathSafety
 
         if (Is(parts[first], "users"))
         {
-            // C:\Users\Sam - the profile root. Its caches are fair game, the folder is not.
+            // The profile root itself; caches beneath it are still allowed.
             if (parts.Length == first + 2)
                 return "is somebody's profile folder.";
 
@@ -176,10 +144,9 @@ public static class PathSafety
         while (body.Contains(@"\\", StringComparison.Ordinal))
             body = body.Replace(@"\\", @"\", StringComparison.Ordinal);
 
-        // Windows silently drops trailing dots and spaces from every component, so "System32."
-        // opens System32. Dropping them here too means the name checks below cannot be stepped
-        // around by adding one. A component that is nothing but dots is left alone, because that
-        // is "." or ".." and the upwards-walk check still has to be able to see it.
+        // Windows ignores trailing dots and spaces ("System32." opens System32), so strip them
+        // or the name checks can be stepped around. Components that are all dots are left alone
+        // so the upwards-walk check can still see "..".
         body = string.Join('\\', body.Split('\\')
             .Select(s => s.Length > 0 && s.All(c => c == '.') ? s : s.TrimEnd(' ', '.')));
 
