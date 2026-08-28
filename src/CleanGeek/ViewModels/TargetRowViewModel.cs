@@ -3,7 +3,7 @@ using CleanGeek.Core.Services;
 
 namespace CleanGeek.ViewModels;
 
-/// <summary>One row on the Clean screen: a target, what it found, and whether it is ticked.</summary>
+/// <summary>One row on the Clean screen: a target, its finding, and whether it is ticked.</summary>
 public sealed class TargetRowViewModel(CleanupTarget target, ScanFinding finding, bool ticked, bool elevated)
     : ObservableObject
 {
@@ -35,7 +35,7 @@ public sealed class TargetRowViewModel(CleanupTarget target, ScanFinding finding
         ? $"{Finding.Files:n0} {(Finding.Files == 1 ? "item" : "items")}"
         : "Nothing found";
 
-    /// <summary>The short tag on the right of the row. Says what it costs, never how urgent it is.</summary>
+    /// <summary>The risk tag shown at the right of the row.</summary>
     public string RiskTag => Target.Risk switch
     {
         CleanupRisk.Rebuilds => "REBUILDS ITSELF",

@@ -3,14 +3,9 @@
   <assemblyIdentity version="1.0.0.0" name="TechyGeeksHome.CleanGeek" />
 
   <!--
-    asInvoker, deliberately. Everything CleanGeek does for a normal user - scanning, and cleaning
-    the temporary files, caches and browser data inside their own profile - works without
-    administrator rights, and an application that asks for them at launch has trained the person
-    to say yes to a prompt before it has told them what it wants.
-
-    The machine-wide targets (Windows Temp, update leftovers, the memory dump, Windows.old) need
-    elevation. Those are marked NeedsAdmin in the catalogue, DeleteGate refuses them without it,
-    and the Clean screen says so instead of failing quietly.
+    asInvoker: scanning and cleaning inside the user's own profile need no administrator rights.
+    Machine-wide targets are marked NeedsAdmin in the catalogue and DeleteGate refuses them
+    without elevation.
   -->
   <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
     <security>

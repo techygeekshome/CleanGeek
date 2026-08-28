@@ -2,11 +2,12 @@ using CleanGeek.Core.Models;
 
 namespace CleanGeek.Core.Services;
 
-/// <param name="Chosen">This one application was picked, on its own.</param>
-/// <param name="Elevated">CleanGeek has administrator rights.</param>
+/// <summary>The conditions an uninstall is checked against.</summary>
+/// <param name="Chosen">This application is selected.</param>
+/// <param name="Elevated">Running with administrator rights.</param>
 /// <param name="Unattended">A scheduled run.</param>
 /// <param name="OthersAlsoChosen">More than one application is selected.</param>
-/// <param name="PackagedAppsEnabled">The person has packaged (Store) applications switched on.</param>
+/// <param name="PackagedAppsEnabled">Packaged (Store) applications are enabled in settings.</param>
 public readonly record struct UninstallContext(
     bool Chosen,
     bool Elevated,
@@ -14,11 +15,7 @@ public readonly record struct UninstallContext(
     bool OthersAlsoChosen,
     bool PackagedAppsEnabled);
 
-/// <summary>
-/// The Installed screen is what would have been UninstallGeek. It hands the job to the
-/// publisher's own uninstaller and never writes its own - so the rules here are about which
-/// uninstaller may be run, and when.
-/// </summary>
+/// <summary>Decides which registered uninstaller may be run, and when.</summary>
 public static class UninstallGate
 {
     public static string? Refuse(InstalledApp app, UninstallContext ctx)
@@ -29,8 +26,7 @@ public static class UninstallGate
         if (!ctx.Chosen)
             return $"{app.Name} was not selected.";
 
-        // One at a time. Uninstallers open their own windows and ask their own questions; firing
-        // a dozen at once produces a pile of dialogs nobody can tell apart.
+        // One at a time: uninstallers show their own dialogs and need answers.
         if (ctx.OthersAlsoChosen)
             return "Uninstall one application at a time - their own uninstallers need your answers.";
 

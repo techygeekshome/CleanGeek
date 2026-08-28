@@ -4,17 +4,9 @@ using Microsoft.Win32;
 namespace CleanGeek.Services;
 
 /// <summary>
-/// What starts when Windows starts, read from the same places Task Manager reads.
-///
-/// CleanGeek 1.0 reports. It does not switch anything off. StartupPolicy already holds the rules
-/// for that and they are tested, but the write itself waits for 1.1, for the same reason
-/// DriverGeek 1.0 reports driver updates without installing them: the reading half is most of the
-/// value and none of the risk, and shipping it first means the risky half lands on a codebase
-/// people have already been running.
-///
-/// Logon-triggered scheduled tasks are the fourth place things start from. They need the Task
-/// Scheduler API and they arrive with 1.1; until then the Startup screen says they are not listed
-/// rather than implying the list is complete.
+/// Reads startup entries from the Run keys and the Startup folders. Read-only; nothing is
+/// disabled here. Logon-triggered scheduled tasks are not read, as that needs the Task
+/// Scheduler API.
 /// </summary>
 public sealed class StartupService
 {
@@ -74,9 +66,8 @@ public sealed class StartupService
     }
 
     /// <summary>
-    /// Task Manager records a disabled entry in StartupApproved as a blob whose first byte is odd:
-    /// 2 means on, 3 means off. Anything CleanGeek cannot read is reported as ON, because showing
-    /// something as disabled when it is not is the more misleading of the two mistakes.
+    /// StartupApproved records a disabled entry as a blob whose first byte is odd (2 on, 3 off).
+    /// An unreadable value is reported as enabled.
     /// </summary>
     private static bool IsApproved(RegistryKey? approved, string name)
     {

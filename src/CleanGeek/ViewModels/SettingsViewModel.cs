@@ -55,8 +55,7 @@ public sealed class SettingsViewModel(SettingsService settings) : ObservableObje
             settings.Save();
             Raise();
 
-            // The Installed list is read once and cached. Changing what it is supposed to contain
-            // has to drop that cache, or the switch appears to do nothing until a restart.
+            // The Installed list is cached, so the cache has to be dropped for the change to show.
             ListsAffected?.Invoke();
         }
     }
@@ -66,10 +65,7 @@ public sealed class SettingsViewModel(SettingsService settings) : ObservableObje
 
     public string SafetyNote => AppSettings.SafetyNote;
 
-    /// <summary>
-    /// The refusals, read straight out of the catalogue so this screen cannot drift away from
-    /// what the code actually does.
-    /// </summary>
+    /// <summary>The never-cleaned list, read from the catalogue so the screen cannot drift from it.</summary>
     public IReadOnlyList<RefusalViewModel> NeverCleaned =>
         Catalogue.NeverCleaned.Select(n => new RefusalViewModel(n.Thing, n.Why)).ToList();
 }

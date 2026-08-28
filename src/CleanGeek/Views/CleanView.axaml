@@ -18,8 +18,7 @@
         </StackPanel>
       </Border>
 
-      <!-- The confirmation. Not a pop-up: it appears where the numbers are, so what you are
-           agreeing to is on screen next to the button you agreed with. -->
+      <!-- Inline confirmation, shown next to the figures rather than in a pop-up. -->
       <Border Background="{StaticResource Panel2}" BorderBrush="{StaticResource Amber}"
               BorderThickness="1" CornerRadius="7" Padding="16,14"
               IsVisible="{Binding Confirming}">

@@ -3,10 +3,7 @@ using CleanGeek.Services;
 
 namespace CleanGeek;
 
-/// <summary>
-/// The scheduled scan. No window, no interaction, and nothing removed. It measures, writes a line
-/// to the log, and exits.
-/// </summary>
+/// <summary>The scheduled scan: no window, nothing removed, one line written to the log.</summary>
 internal static class HeadlessScan
 {
     public static int Run()
@@ -30,8 +27,7 @@ internal static class HeadlessScan
         }
         catch (Exception ex)
         {
-            // A scheduled task that throws leaves a red entry in Task Scheduler and no
-            // explanation. Write the reason down where a person can find it.
+            // Task Scheduler reports a failure with no detail, so record the reason.
             Log.Write("Scheduled scan failed: " + ex);
             return 1;
         }

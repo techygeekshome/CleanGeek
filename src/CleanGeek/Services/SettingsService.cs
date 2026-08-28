@@ -19,7 +19,7 @@ public sealed class SettingsService
         }
         catch (JsonException ex)
         {
-            // A corrupt settings file is not a reason to refuse to start.
+            // A corrupt settings file falls back to defaults rather than failing to start.
             Log.Write($"settings.json could not be read, using defaults: {ex.Message}");
             Current = new AppSettings();
         }
@@ -31,10 +31,8 @@ public sealed class SettingsService
     {
         try
         {
-            // Written beside the real file and then moved over it. A power cut during a direct
-            // write would leave a truncated settings.json, which Load recovers from by falling
-            // back to the defaults - silently re-ticking things somebody had deliberately turned
-            // off. A move is atomic; a write is not.
+            // Write to a temp file and move over the original. A truncated settings.json would
+            // load as defaults, silently re-ticking targets the user turned off.
             var path = AppPaths.SettingsFile;
             var temp = path + ".tmp";
 

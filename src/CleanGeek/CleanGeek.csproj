@@ -7,7 +7,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>..\..\icons\cleangeek.ico</ApplicationIcon>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-    <!-- Lets the project build on a non-Windows machine (CI) even though it only runs on Windows. -->
+    <!-- Allows the project to build on non-Windows CI, though it only runs on Windows. -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <NoWarn>CA1416</NoWarn>
   </PropertyGroup>

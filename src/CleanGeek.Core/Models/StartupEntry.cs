@@ -18,7 +18,7 @@ public enum StartupScope
     AllUsers
 }
 
-/// <summary>One thing that starts itself when Windows starts.</summary>
+/// <summary>One entry that runs when Windows starts.</summary>
 public sealed record StartupEntry(
     string Name,
     string Command,

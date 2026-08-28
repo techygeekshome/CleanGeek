@@ -2,11 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace CleanGeek.Services;
 
-/// <summary>
-/// The Recycle Bin, through the shell rather than the file system. CleanGeek never walks
-/// $Recycle.Bin itself - PathSafety refuses it on every drive - because Windows owns that folder
-/// and has an API for both questions.
-/// </summary>
+/// <summary>Recycle Bin size and emptying, via the shell API. $Recycle.Bin is never walked directly.</summary>
 public static class RecycleBin
 {
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
@@ -27,7 +23,7 @@ public static class RecycleBin
     private const uint NoProgressUi = 0x00000002;
     private const uint NoSound = 0x00000004;
 
-    /// <summary>How much is in the bin, across every drive. Zero when it cannot be asked.</summary>
+    /// <summary>How much is in the bin across every drive. Zero when the call fails.</summary>
     public static (long Bytes, int Items) Measure()
     {
         try
@@ -51,9 +47,8 @@ public static class RecycleBin
     }
 
     /// <summary>
-    /// Empties it. CleanGeek suppresses the shell's own confirmation because it has already asked
-    /// its own question - DeleteGate will not get this far unless the Recycle Bin was ticked on
-    /// its own, deliberately, rather than swept in by a bulk action.
+    /// Empties the bin. The shell's own confirmation is suppressed because DeleteGate has already
+    /// required an explicit, non-bulk selection.
     /// </summary>
     public static bool Empty()
     {

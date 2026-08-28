@@ -4,13 +4,7 @@ using CleanGeek.Core.Services;
 
 namespace CleanGeek.Services;
 
-/// <summary>
-/// Runs the publisher's own uninstaller. CleanGeek does not write an uninstaller of its own and
-/// does not delete an application's files itself: the people who wrote the software know what it
-/// installed, and second-guessing them is how a "cleaner" removes the wrong folder.
-///
-/// What CleanGeek adds is the list, the sorting, and the refusals in UninstallGate.
-/// </summary>
+/// <summary>Runs the publisher's registered uninstaller. No files are removed by this application.</summary>
 public sealed class UninstallService
 {
     /// <summary>Starts the uninstaller, or returns the reason it did not.</summary>
@@ -35,8 +29,7 @@ public sealed class UninstallService
 
         try
         {
-            // UseShellExecute so that an uninstaller which needs administrator rights raises its
-            // own prompt, rather than failing silently because CleanGeek is not elevated.
+            // UseShellExecute so an uninstaller needing elevation raises its own prompt.
             Process.Start(new ProcessStartInfo(file, arguments) { UseShellExecute = true });
             Log.Write($"Uninstall started for {app.Name} ({app.Version}).");
             return null;
@@ -54,9 +47,8 @@ public sealed class UninstallService
     }
 
     /// <summary>
-    /// Splits a registered uninstall string into a file and its arguments. These are written by
-    /// hundreds of different installers and are inconsistent: some quote the path, some do not,
-    /// and some are an MsiExec line with no path at all.
+    /// Splits a registered uninstall string into a file and its arguments. The format is
+    /// inconsistent: the path may or may not be quoted, and may be an MsiExec line.
     /// </summary>
     internal static (string File, string Arguments) Split(string command)
     {
@@ -70,8 +62,8 @@ public sealed class UninstallService
             return (text[1..end], text[(end + 1)..].Trim());
         }
 
-        // Unquoted. The executable is everything up to the first ".exe", where there is one -
-        // splitting on the first space breaks every path with a space in it, which is most of them.
+        // Unquoted: cut at the first ".exe", since splitting on the first space breaks paths
+        // containing spaces.
         var exe = text.IndexOf(".exe", StringComparison.OrdinalIgnoreCase);
         if (exe > 0)
         {

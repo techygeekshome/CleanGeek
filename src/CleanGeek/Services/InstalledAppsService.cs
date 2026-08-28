@@ -4,16 +4,8 @@ using Microsoft.Win32;
 namespace CleanGeek.Services;
 
 /// <summary>
-/// The Installed screen's inventory. This is what would have been UninstallGeek: CleanGeek
-/// absorbed it rather than shipping two applications that both enumerate installed software and
-/// both hunt for the same leftovers.
-///
-/// It reads the same Uninstall keys Windows itself reads, and it never writes to them.
-///
-/// Packaged (Store) applications are not listed in 1.0. Enumerating them properly needs the
-/// packaging APIs and a Windows-version-specific target framework, and guessing at them from
-/// half-documented registry keys would be exactly the sort of approximation this range does not
-/// ship. The Installed screen says so on screen rather than quietly showing a short list.
+/// Reads installed applications from the Uninstall registry keys. Read-only. Packaged (Store)
+/// applications are not listed; that needs the packaging APIs and a Windows-specific TFM.
 /// </summary>
 public sealed class InstalledAppsService
 {
@@ -54,8 +46,7 @@ public sealed class InstalledAppsService
                     var app = ReadOne(sub);
                     if (app is null) continue;
 
-                    // The same application turns up under more than one hive on a machine where it
-                    // was installed for everyone and later repaired per user. Keep the first.
+                    // The same application can appear in more than one hive. Keep the first.
                     into.TryAdd(app.Name + " " + app.Version, app);
                 }
                 catch (System.Security.SecurityException)
@@ -79,8 +70,7 @@ public sealed class InstalledAppsService
         var name = key.GetValue("DisplayName") as string;
         if (string.IsNullOrWhiteSpace(name)) return null;
 
-        // Windows hides these from Settings, Apps, and so does CleanGeek by default: patches,
-        // runtimes, and the child entries of things that are already in the list.
+        // Patches, runtimes and child entries; hidden by default, as in Settings > Apps.
         var systemComponent = Number(key, "SystemComponent") == 1
                               || key.GetValue("ParentKeyName") is string { Length: > 0 }
                               || key.GetValue("ReleaseType") is "Security Update" or "Update Rollup" or "Hotfix";
@@ -96,7 +86,7 @@ public sealed class InstalledAppsService
             UninstallCommand: uninstall.Trim(),
             Source: AppSource.Installed,
             InstalledOn: ParseInstallDate(key.GetValue("InstallDate") as string),
-            // EstimatedSize is in kilobytes, and is missing more often than it is present.
+            // EstimatedSize is in kilobytes and is often absent.
             EstimatedBytes: Number(key, "EstimatedSize") * 1024L,
             InstallLocation: (key.GetValue("InstallLocation") as string ?? "").Trim(),
             IsSystemComponent: systemComponent);
@@ -110,7 +100,7 @@ public sealed class InstalledAppsService
             _ => 0
         };
 
-    /// <summary>InstallDate is yyyyMMdd when it is there at all, and is frequently malformed.</summary>
+    /// <summary>InstallDate is yyyyMMdd when present, and is often malformed.</summary>
     private static DateTime? ParseInstallDate(string? raw) =>
         DateTime.TryParseExact(raw, "yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture,
                                System.Globalization.DateTimeStyles.None, out var date)

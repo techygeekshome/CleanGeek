@@ -3,13 +3,8 @@ using CleanGeek.Core.Models;
 namespace CleanGeek.Core.Services;
 
 /// <summary>
-/// The arithmetic behind the two numbers on the Clean screen: what was found, and what is
-/// actually going to be removed.
-///
-/// This exists as its own tested thing because getting it wrong is the classic cleaner lie. A
-/// screen that says "28.3 GB found" and leaves that number sitting next to a Clean button when
-/// only 1.2 GB is ticked has told the user something untrue, and it is the exact trick the paid
-/// tools use. Selected never counts a target that is not ticked, and never exceeds Found.
+/// Totals for the Clean screen: what was found, and what is selected for removal. Selected never
+/// counts an unticked target, so it can never exceed Found.
 /// </summary>
 public static class SizeReport
 {
@@ -33,10 +28,7 @@ public static class SizeReport
             .Where(f => Catalogue.ById(f.TargetId)?.Category == category)
             .Sum(f => Math.Max(0, f.Bytes));
 
-    /// <summary>
-    /// The line under the Clean button. When nothing is ticked it says so, rather than showing a
-    /// big number with a button next to it.
-    /// </summary>
+    /// <summary>The summary line under the Clean button.</summary>
     public static string Headline(IEnumerable<ScanFinding> findings, IReadOnlyCollection<string> selectedIds)
     {
         var list = findings as IList<ScanFinding> ?? findings.ToList();
