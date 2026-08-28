@@ -240,8 +240,16 @@ public sealed class ShellViewModel : ObservableObject
     {
         if (Installed.Count > 0) return;
 
-        foreach (var app in _installed.Read(_settings.Current.HideSystemComponents))
-            Installed.Add(new InstalledRowViewModel(app));
+        try
+        {
+            foreach (var app in _installed.Read(_settings.Current.HideSystemComponents))
+                Installed.Add(new InstalledRowViewModel(app));
+        }
+        catch (Exception ex)
+        {
+            Log.Write("Installed list failed: " + ex);
+            StatusLine = "The installed list could not be read. See cleangeek.log for the reason.";
+        }
 
         Raise(nameof(InstalledCount));
     }
@@ -250,8 +258,16 @@ public sealed class ShellViewModel : ObservableObject
     {
         if (Startup.Count > 0) return;
 
-        foreach (var entry in _startup.Read())
-            Startup.Add(new StartupRowViewModel(entry));
+        try
+        {
+            foreach (var entry in _startup.Read())
+                Startup.Add(new StartupRowViewModel(entry));
+        }
+        catch (Exception ex)
+        {
+            Log.Write("Startup list failed: " + ex);
+            StatusLine = "The startup list could not be read. See cleangeek.log for the reason.";
+        }
 
         Raise(nameof(StartupCount));
         Raise(nameof(StartupOnCount));
