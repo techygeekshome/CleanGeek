@@ -6,7 +6,8 @@
 
 **Get your disk space back. Without a registry cleaner, and without being sold to.**
 
-[![Status](https://img.shields.io/badge/status-in%20development-b7791f)](https://github.com/techygeekshome/CleanGeek)
+[![Build](https://github.com/techygeekshome/CleanGeek/actions/workflows/build.yml/badge.svg)](https://github.com/techygeekshome/CleanGeek/actions/workflows/build.yml)
+[![Status](https://img.shields.io/badge/status-1.0%20in%20review-b7791f)](https://github.com/techygeekshome/CleanGeek)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078d4)](#getting-it-running)
 [![License](https://img.shields.io/badge/License-GPL--3.0-blue)](LICENSE)
 [![Made by TechyGeeksHome](https://img.shields.io/badge/made%20by-TechyGeeksHome-b191f2)](https://techygeekshome.info)
@@ -19,9 +20,9 @@
 ---
 
 There are gigabytes on a typical Windows machine that nothing needs: Windows Update leftovers,
-the delivery-optimisation cache, crash dumps, thumbnail and icon caches, old component-store
-versions, per-browser caches. CleanGeek finds them, tells you exactly how much each one is
-worth, and removes only what you tick.
+the delivery-optimisation cache, crash dumps, thumbnail and icon caches, per-browser caches, and
+the memory dump from a blue screen nobody is going to analyse. CleanGeek finds them, tells you
+exactly how much each one is worth, and removes only what you tick.
 
 The scan and the clean are always two separate steps. You see the number before anything is
 deleted, and the recovered total afterwards.
@@ -31,31 +32,52 @@ deleted, and the recovered total afterwards.
 This is the other category with a deservedly poor reputation, so again, plainly:
 
 - **There is no registry cleaner, and there will not be one.** It is the headline feature of
-  every product in this space and it does not work. Registry cleaning has no measurable benefit
-  on any Windows version this decade, Microsoft does not endorse the practice, and the failure
-  mode is a machine that will not boot. The upside is zero. We are not shipping it for the sake
-  of a bullet point.
+  every product in this space and it does not work. Nothing measurable gets faster, nothing gets
+  more stable, and the failure mode is a machine that will not start. The upside is zero. We are
+  not shipping it for the sake of a bullet point.
 - **Saved passwords are not a cleanup target.** Not off by default — not present at all.
 - **Cookies, history and saved form data are off by default**, and each one says in plain words
   what clearing it will cost you before you tick it.
 - **Nothing is deleted outside a known, named list.** No wildcard sweeps of your profile.
 - **The Recycle Bin is only emptied when you explicitly tick it**, never as part of "clean
   everything".
+- **The component store (WinSxS) is not a folder it deletes from.** It is serviced, not swept.
+  If it has genuinely grown too large the supported tool is
+  `DISM /Online /Cleanup-Image /StartComponentCleanup`, and that is a decision to make
+  deliberately rather than as part of a sweep.
+- **The Prefetch folder is left alone.** Emptying it makes the next few starts slower, not faster.
 - **No telemetry, no account, no bundled offers, no paid tier.**
 
 ## What it does
 
-- 🧹 **Cleans what is actually safe to clean** — temp files, Windows Update and delivery
-  optimisation leftovers, crash dumps, thumbnail and icon caches, browser caches, the component
-  store, previous Windows installations.
-- 🔢 **Shows the number first** — every category reports what it would recover before anything is
-  removed.
-- ✅ **Nothing ticked by default except caches and temp files.** The riskier categories are opt-in
-  every time.
-- 🚀 **Startup manager** — see what launches with Windows, and what each entry costs you.
-- ⏰ **Scheduled cleaning** — the feature the competition charges for, on the same Task Scheduler
-  plumbing AppGeek already uses.
+- 🧹 **Cleans what is actually safe to clean** — temporary files, Windows Update and delivery
+  optimisation leftovers, crash dumps, thumbnail and icon caches, browser caches, the system
+  memory dump, previous Windows installations.
+- 🔢 **Shows the number first** — every item reports what it would recover before anything is
+  removed, and the headline never counts something you have not ticked.
+- ✅ **Nothing ticked by default except caches and temporary files.** Everything with a cost is
+  opt-in, and says in plain words what that cost is.
+- 📦 **Lists everything installed**, and hands an uninstall to the publisher's own uninstaller.
+- 🚀 **Shows what starts with Windows**, and which entries you should leave alone.
+- ⏰ **Scheduled scan** — it measures on a schedule and writes the result to the log. It never
+  deletes on a schedule; there is no command line that can.
 - 🔒 **Skips anything in use** — nothing is removed from under a running process.
+
+### Where 1.0 stops
+
+Shipping the reading half first is deliberate, and it is the same order DriverGeek took: it is
+most of the value with none of the risk, and the half that changes things then lands on a
+codebase people have already been running.
+
+| | 1.0 | Coming |
+|---|---|---|
+| Cleaning the items on the Clean screen | ✅ | |
+| Emptying the Recycle Bin, when you tick it on its own | ✅ | |
+| Listing installed applications, and uninstalling one | ✅ | |
+| Listing what starts with Windows | ✅ | |
+| Switching a startup entry off | | 1.1 |
+| Sign-in scheduled tasks in the startup list | | 1.1 |
+| Store apps on the Installed screen | | 1.1 |
 
 ### What it deliberately does not duplicate
 
@@ -78,12 +100,20 @@ SHA-256 hashes.
 Requires the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 
 ```powershell
-dotnet build src/CleanGeek/CleanGeek.csproj -c Release
+.\build.cmd
 ```
 
+That builds the solution, runs the checks, and publishes the portable build to
+`publish\portable\CleanGeek.exe`. To do the steps yourself:
+
 ```powershell
-dotnet publish src/CleanGeek/CleanGeek.csproj -c Release -r win-x64 --self-contained true
+dotnet build CleanGeek.sln -c Release
+dotnet run --project tests\CleanGeek.Tests -c Release
 ```
+
+The rules about what may be deleted live in `src/CleanGeek.Core`, which targets plain `net8.0`
+and touches no Windows API, so the checks build and run anywhere — including CI, on a runner
+with no files to lose. Everything that talks to Windows is in `src/CleanGeek`.
 
 ## Support & contributing
 
