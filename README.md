@@ -13,7 +13,7 @@
 [![Made by TechyGeeksHome](https://img.shields.io/badge/made%20by-TechyGeeksHome-b191f2)](https://techygeekshome.info)
 [![Support on Ko-fi](https://img.shields.io/badge/support-Ko--fi-ff5e5b)](https://ko-fi.com/techygeekshome)
 
-[What it does](#what-it-does) · [What it refuses to do](#what-it-refuses-to-do) · [Getting it running](#getting-it-running) · [Build from source](#build-from-source) · [Licence](#licence)
+[What it does](#what-it-does) · [Screenshots](#screenshots) · [What it refuses to do](#what-it-refuses-to-do) · [Getting it running](#getting-it-running) · [Build from source](#build-from-source) · [Licence](#licence)
 
 </div>
 
@@ -32,35 +32,35 @@ deleted, and the recovered total afterwards.
 This is the other category with a deservedly poor reputation, so again, plainly:
 
 - **There is no registry cleaner, and there will not be one.** It is the headline feature of
-  every product in this space and it does not work. Nothing measurable gets faster, nothing gets
-  more stable, and the failure mode is a machine that will not start. The upside is zero. We are
-  not shipping it for the sake of a bullet point.
+every product in this space and it does not work. Nothing measurable gets faster, nothing gets
+more stable, and the failure mode is a machine that will not start. The upside is zero. We are
+not shipping it for the sake of a bullet point.
 - **Saved passwords are not a cleanup target.** Not off by default — not present at all.
 - **Cookies, history and saved form data are off by default**, and each one says in plain words
-  what clearing it will cost you before you tick it.
+what clearing it will cost you before you tick it.
 - **Nothing is deleted outside a known, named list.** No wildcard sweeps of your profile.
 - **The Recycle Bin is only emptied when you explicitly tick it**, never as part of "clean
-  everything".
+everything".
 - **The component store (WinSxS) is not a folder it deletes from.** It is serviced, not swept.
-  If it has genuinely grown too large the supported tool is
-  `DISM /Online /Cleanup-Image /StartComponentCleanup`, and that is a decision to make
-  deliberately rather than as part of a sweep.
+If it has genuinely grown too large the supported tool is
+`DISM /Online /Cleanup-Image /StartComponentCleanup`, and that is a decision to make
+deliberately rather than as part of a sweep.
 - **The Prefetch folder is left alone.** Emptying it makes the next few starts slower, not faster.
 - **No telemetry, no account, no bundled offers, no paid tier.**
 
 ## What it does
 
 - 🧹 **Cleans what is actually safe to clean** — temporary files, Windows Update and delivery
-  optimisation leftovers, crash dumps, thumbnail and icon caches, browser caches, the system
-  memory dump, previous Windows installations.
+optimisation leftovers, crash dumps, thumbnail and icon caches, browser caches, the system
+memory dump, previous Windows installations.
 - 🔢 **Shows the number first** — every item reports what it would recover before anything is
-  removed, and the headline never counts something you have not ticked.
+removed, and the headline never counts something you have not ticked.
 - ✅ **Nothing ticked by default except caches and temporary files.** Everything with a cost is
-  opt-in, and says in plain words what that cost is.
+opt-in, and says in plain words what that cost is.
 - 📦 **Lists everything installed**, and hands an uninstall to the publisher's own uninstaller.
 - 🚀 **Shows what starts with Windows**, and which entries you should leave alone.
 - ⏰ **Scheduled scan** — it measures on a schedule and writes the result to the log. It never
-  deletes on a schedule; there is no command line that can.
+deletes on a schedule; there is no command line that can.
 - 🔒 **Skips anything in use** — nothing is removed from under a running process.
 
 ### Where 1.0 stops
@@ -88,6 +88,32 @@ CleanGeek stays in its lane. The rest of the range already covers the neighbouri
 | See what is eating your disk, visually | [DiskGeek](https://github.com/techygeekshome/DiskGeek) |
 | Update your installed software | [AppGeek](https://github.com/techygeekshome/AppGeek) |
 | Update your drivers | [DriverGeek](https://github.com/techygeekshome/DriverGeek) |
+
+## Screenshots
+
+<div align="center">
+
+**Clean** — measures first, and removes only what you tick.
+
+<img src="docs/screenshots/clean.png" alt="The Clean screen, showing what each item is worth before anything is removed" width="820">
+
+**The confirmation** — what is about to go, in words, before it goes.
+
+<img src="docs/screenshots/confirm.png" alt="The confirmation strip naming exactly what is about to be removed" width="820">
+
+**Installed** — everything installed, uninstalled through the publisher's own uninstaller.
+
+<img src="docs/screenshots/installed.png" alt="The Installed screen" width="820">
+
+**Startup** — what starts with Windows, and what to leave alone.
+
+<img src="docs/screenshots/startup.png" alt="The Startup screen" width="820">
+
+**Settings** — including a plain list of what CleanGeek will not do.
+
+<img src="docs/screenshots/settings.png" alt="The Settings screen" width="820">
+
+</div>
 
 ## Getting it running
 
