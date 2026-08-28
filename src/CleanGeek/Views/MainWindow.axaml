@@ -108,8 +108,7 @@
         <views:StartupView IsVisible="{Binding IsStartup}" />
         <!--
              Settings has its own view model, so it is hosted rather than nested: setting
-             DataContext on the view itself would also rebind IsVisible, which the compiled-binding
-             checker catches at build time.
+             DataContext on the view would also rebind IsVisible.
         -->
         <ContentControl IsVisible="{Binding IsSettings}" Content="{Binding Settings}">
           <ContentControl.ContentTemplate>
