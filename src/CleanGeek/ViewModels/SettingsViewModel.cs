@@ -54,8 +54,15 @@ public sealed class SettingsViewModel(SettingsService settings) : ObservableObje
             settings.Current.HideSystemComponents = value;
             settings.Save();
             Raise();
+
+            // The Installed list is read once and cached. Changing what it is supposed to contain
+            // has to drop that cache, or the switch appears to do nothing until a restart.
+            ListsAffected?.Invoke();
         }
     }
+
+    /// <summary>Raised when a setting invalidates a list the shell has already loaded.</summary>
+    public event Action? ListsAffected;
 
     public string SafetyNote => AppSettings.SafetyNote;
 

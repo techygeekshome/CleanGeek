@@ -16,6 +16,7 @@ public sealed class ShellViewModel : ObservableObject
     private string _page = "Clean";
     private bool _busy;
     private bool _scanned;
+    private bool _confirming;
     private string _statusLine = "Not scanned yet. Nothing is measured, and nothing is removed, until you press Scan.";
     private string _headline = "";
     private string _lastCleanLine = "";
@@ -24,14 +25,18 @@ public sealed class ShellViewModel : ObservableObject
     {
         _settings.Load();
 
-        ScanCommand = new RelayCommand(Scan, () => !Busy);
-        CleanCommand = new RelayCommand(Clean, () => !Busy && Scanned && SelectedBytes > 0);
+        ScanCommand = new RelayCommand(() => _ = ScanAsync(), () => !Busy);
+        CleanCommand = new RelayCommand(StartClean, () => !Busy && Scanned && SelectedBytes > 0);
+        ConfirmCleanCommand = new RelayCommand(() => _ = CleanAsync());
+        CancelCleanCommand = new RelayCommand(() => Confirming = false);
+
         ShowClean = new RelayCommand(() => Page = "Clean");
         ShowInstalled = new RelayCommand(() => { Page = "Installed"; LoadInstalled(); });
         ShowStartup = new RelayCommand(() => { Page = "Startup"; LoadStartup(); });
         ShowSettings = new RelayCommand(() => Page = "Settings");
 
         Settings = new SettingsViewModel(_settings);
+        Settings.ListsAffected += () => { Installed.Clear(); Startup.Clear(); };
 
         BuildTargetRows();
     }
@@ -43,6 +48,8 @@ public sealed class ShellViewModel : ObservableObject
 
     public RelayCommand ScanCommand { get; }
     public RelayCommand CleanCommand { get; }
+    public RelayCommand ConfirmCleanCommand { get; }
+    public RelayCommand CancelCleanCommand { get; }
     public RelayCommand ShowClean { get; }
     public RelayCommand ShowInstalled { get; }
     public RelayCommand ShowStartup { get; }
@@ -58,7 +65,7 @@ public sealed class ShellViewModel : ObservableObject
 
     public string ElevationNote => IsElevated
         ? "Running as administrator."
-        : "Running as you, not as administrator. The machine-wide items are shown but cannot be cleaned.";
+        : "Running as you, not as administrator. The machine-wide items are shown and measured, but they cannot be cleaned and are not counted in what is going.";
 
     public string Page
     {
@@ -93,13 +100,21 @@ public sealed class ShellViewModel : ObservableObject
     }
 
     public bool Scanned { get => _scanned; private set => Set(ref _scanned, value); }
+
+    /// <summary>True while the confirmation strip is up, waiting for a yes or a cancel.</summary>
+    public bool Confirming { get => _confirming; private set => Set(ref _confirming, value); }
+
     public string StatusLine { get => _statusLine; private set => Set(ref _statusLine, value); }
     public string Headline { get => _headline; private set => Set(ref _headline, value); }
     public string LastCleanLine { get => _lastCleanLine; private set => Set(ref _lastCleanLine, value); }
     public bool HasCleaned => LastCleanLine.Length > 0;
 
+    public string ConfirmLine =>
+        $"About to remove {ByteSize.Format(SelectedBytes)} across " +
+        $"{string.Join(", ", Actionable().Select(t => t.Title))}. This cannot be undone.";
+
     public long SelectedBytes =>
-        SizeReport.Selected(Targets.Select(t => t.Finding).ToList(), TickedIds());
+        SizeReport.Selected(Targets.Select(t => t.Finding).ToList(), ActionableIds());
 
     /// <summary>
     /// The list is built once and reused, so a scan updates the numbers on rows the person has
@@ -122,33 +137,48 @@ public sealed class ShellViewModel : ObservableObject
 
     private void OnTickChanged()
     {
-        _settings.Current.Selected = TickedIds().ToList();
+        // What is SAVED is everything ticked, including the machine-wide rows this run cannot
+        // touch - the choice is still the person's, and it should survive a restart as
+        // administrator. What is ACTED ON is only what can actually be cleaned.
+        _settings.Current.Selected = Targets.Where(t => t.Ticked).Select(t => t.Id).ToList();
         _settings.Save();
 
+        Confirming = false;
         Raise(nameof(SelectedBytes));
-        Headline = SizeReport.Headline(Targets.Select(t => t.Finding).ToList(), TickedIds());
+        Headline = SizeReport.Headline(Targets.Select(t => t.Finding).ToList(), ActionableIds());
         CleanCommand.RaiseCanExecuteChanged();
     }
 
-    private List<string> TickedIds() => Targets.Where(t => t.Ticked).Select(t => t.Id).ToList();
+    private IEnumerable<TargetRowViewModel> Actionable() => Targets.Where(t => t.Ticked && !t.Blocked);
 
-    private void Scan()
+    private List<string> ActionableIds() => Actionable().Select(t => t.Id).ToList();
+
+    private async Task ScanAsync()
     {
         Busy = true;
+        Confirming = false;
         StatusLine = "Measuring. Nothing is being deleted.";
 
         try
         {
-            var report = _scanner.Scan();
+            // Off the UI thread: a scan that walks Temp, four browser profiles and a Windows.old
+            // takes minutes, and a frozen window is one Windows offers to close for you - which,
+            // during a clean, would mean killing the process mid-delete.
+            var report = await Task.Run(() => _scanner.Scan());
 
             foreach (var row in Targets)
                 row.Update(report.For(row.Id));
 
             Scanned = true;
-            Headline = SizeReport.Headline(report.Findings, TickedIds());
+            Headline = SizeReport.Headline(report.Findings, ActionableIds());
             StatusLine = report.Unreadable.Count == 0
                 ? "Scan finished. Nothing has been removed - press Clean when you are ready."
                 : $"Scan finished. {report.Unreadable.Count} folders could not be read and were left out of the total.";
+        }
+        catch (Exception ex)
+        {
+            Log.Write("Scan failed: " + ex);
+            StatusLine = "The scan could not finish. Nothing was removed. See cleangeek.log for the reason.";
         }
         finally
         {
@@ -158,40 +188,65 @@ public sealed class ShellViewModel : ObservableObject
         }
     }
 
-    private void Clean()
+    private void StartClean()
     {
+        if (_settings.Current.ConfirmBeforeCleaning)
+        {
+            Confirming = true;
+            Raise(nameof(ConfirmLine));
+            return;
+        }
+
+        _ = CleanAsync();
+    }
+
+    private async Task CleanAsync()
+    {
+        Confirming = false;
         Busy = true;
         StatusLine = "Cleaning the items you ticked.";
 
         try
         {
-            // Every target here was ticked individually on the Clean screen, so this is not a
-            // clean-everything sweep - which is what keeps the Recycle Bin available rather than
-            // refused. There is no button in CleanGeek that ticks everything for you.
-            var report = _cleaner.Clean(TickedIds(), bulk: false);
+            var ticked = ActionableIds();
 
-            LastCleanLine = report.BytesRemoved > 0
+            // Bulk means more than one target going at once. It is what keeps the Recycle Bin
+            // out of a sweep: emptying it is only allowed when it is the one thing chosen.
+            var bulk = ticked.Count > 1;
+            var report = await Task.Run(() => _cleaner.Clean(ticked, bulk));
+
+            var line = report.BytesRemoved > 0
                 ? $"Removed {ByteSize.Format(report.BytesRemoved)} across {report.FilesRemoved:n0} files. " +
-                  $"{report.Skipped:n0} were in use or protected and were left alone."
+                  $"{report.InUse:n0} were in use and were left alone."
                 : "Nothing was removed. Everything ticked was either already gone or in use.";
 
-            foreach (var refusal in report.Refusals)
-                LastCleanLine += $"  {Catalogue.ById(refusal.TargetId)?.Title}: {refusal.Refused}";
+            if (report.Blocked > 0)
+                line += $" {report.Blocked:n0} were refused by the safety check and are listed in the log.";
 
-            Scan();
+            foreach (var refusal in report.Refusals)
+                line += $"  {Catalogue.ById(refusal.TargetId)?.Title}: {refusal.Refused}";
+
+            LastCleanLine = line;
+        }
+        catch (Exception ex)
+        {
+            Log.Write("Clean failed: " + ex);
+            LastCleanLine = "The clean stopped early. What had already been removed is gone; " +
+                            "see cleangeek.log for the reason.";
         }
         finally
         {
             Busy = false;
             Raise(nameof(HasCleaned));
         }
+
+        await ScanAsync();
     }
 
     private void LoadInstalled()
     {
         if (Installed.Count > 0) return;
 
-        Installed.Clear();
         foreach (var app in _installed.Read(_settings.Current.HideSystemComponents))
             Installed.Add(new InstalledRowViewModel(app));
 
@@ -202,7 +257,6 @@ public sealed class ShellViewModel : ObservableObject
     {
         if (Startup.Count > 0) return;
 
-        Startup.Clear();
         foreach (var entry in _startup.Read())
             Startup.Add(new StartupRowViewModel(entry));
 
