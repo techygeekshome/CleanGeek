@@ -1,10 +1,6 @@
 namespace CleanGeek.Services;
 
-/// <summary>
-/// A single-file log, kept small. It records what was scanned and what was found, which is what
-/// a user needs when something looks wrong, and nothing that identifies the machine beyond the
-/// device names already on screen. It is never uploaded anywhere.
-/// </summary>
+/// <summary>A single log file, truncated once it passes a size limit.</summary>
 public static class Log
 {
     private const long MaxBytes = 512 * 1024;

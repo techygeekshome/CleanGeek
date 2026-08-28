@@ -3,10 +3,10 @@ using CleanGeek.Core.Services;
 
 namespace CleanGeek.Services;
 
-/// <summary>What one target's clean actually did.</summary>
-/// <param name="Refused">Why the target was not cleaned at all, or null when it was.</param>
-/// <param name="InUse">Files something else had open. Expected, and not a failure.</param>
-/// <param name="Blocked">Files the safety check refused. Not expected - worth telling someone about.</param>
+/// <summary>The result of cleaning one target.</summary>
+/// <param name="Refused">Why the target was not cleaned, or null when it was.</param>
+/// <param name="InUse">Files another process had open. Expected, and not a failure.</param>
+/// <param name="Blocked">Files the safety check refused. Not expected.</param>
 public sealed record CleanOutcome(
     string TargetId,
     long BytesRemoved,
@@ -25,15 +25,13 @@ public sealed record CleanReport(IReadOnlyList<CleanOutcome> Outcomes)
 }
 
 /// <summary>
-/// The second step. Every file is checked against the specification that produced it, and every
-/// target goes through DeleteGate, before anything is removed - and both of those live in
-/// CleanGeek.Core where they are proven on every build. This class does the walking and the
-/// counting; it makes none of the decisions.
+/// Removes what a scan found. Every file is checked against the spec that produced it and every
+/// target goes through DeleteGate; this class only walks and counts.
 /// </summary>
 public sealed class CleanupRunService
 {
     /// <param name="selectedIds">The ticked targets. Nothing outside this list is considered.</param>
-    /// <param name="bulk">True when more than one target is going at once, rather than one chosen on its own.</param>
+    /// <param name="bulk">True when more than one target is being cleaned at once.</param>
     public CleanReport Clean(IReadOnlyCollection<string> selectedIds, bool bulk)
     {
         var elevated = Elevation.IsElevated;
@@ -43,9 +41,8 @@ public sealed class CleanupRunService
         {
             var selected = selectedIds.Contains(target.Id, StringComparer.Ordinal);
 
-            // PathAllowed and FileInUse are facts about individual files, so they are answered
-            // per file inside CleanFiles rather than assumed here. At target level they are true
-            // and false respectively, which is what "no reason yet to refuse" looks like.
+            // PathAllowed and FileInUse are per file and are answered inside CleanFiles; at
+            // target level they carry the neutral values.
             var gate = new DeleteContext(
                 Selected: selected,
                 Elevated: elevated,
@@ -56,7 +53,7 @@ public sealed class CleanupRunService
 
             if (DeleteGate.Refuse(target, gate) is { } refusal)
             {
-                // Only worth reporting when the person actually asked for this target.
+                // Only report a refusal for targets that were actually selected.
                 if (selected) outcomes.Add(new CleanOutcome(target.Id, 0, 0, 0, 0, refusal));
                 continue;
             }
@@ -80,9 +77,8 @@ public sealed class CleanupRunService
         if (!RecycleBin.Empty())
             return new CleanOutcome(target.Id, 0, 0, items, 0, "Windows would not empty the Recycle Bin.");
 
-        // SHQueryRecycleBin can fail while the empty succeeds. Reporting nothing removed after
-        // permanently emptying somebody's bin would be the wrong way round, so say what happened
-        // rather than quoting a size that was never measured.
+        // SHQueryRecycleBin can fail while the empty succeeds, so report zero rather than a size
+        // that was never measured.
         return bytes > 0 || items > 0
             ? new CleanOutcome(target.Id, bytes, items, 0, 0, null)
             : new CleanOutcome(target.Id, 0, 0, 0, 0, null);
@@ -103,9 +99,7 @@ public sealed class CleanupRunService
             {
                 var path = file.FullName;
 
-                // The file is checked against THIS specification, not against the target's roots
-                // pooled together. A target whose root is the Windows folder authorises the one
-                // file it names and nothing else underneath it.
+                // Checked against this spec alone, not the target's roots pooled together.
                 var pathAllowed = PathSafety.IsSafeForSpec(path, spec);
 
                 long size;
@@ -134,8 +128,7 @@ public sealed class CleanupRunService
                 }
                 catch (IOException)
                 {
-                    // Held open by something. Leave it alone - this is the expected outcome for a
-                    // browser cache while the browser is running, and it is not a failure.
+                    // Expected while the owning application is running.
                     inUse++;
                 }
                 catch (UnauthorizedAccessException)
@@ -144,7 +137,7 @@ public sealed class CleanupRunService
                 }
             }
 
-            // A folder that could not be read is a folder whose contents are still there.
+            // Unreadable folders still hold their contents.
             inUse += unreadable.Count;
 
             RemoveEmptyFolders(spec);
@@ -154,12 +147,9 @@ public sealed class CleanupRunService
     }
 
     /// <summary>
-    /// Tidies up the folders left behind once their files have gone. Only empty ones, only inside
-    /// the specification's own root, and never the root itself - PathSafety enforces the last of
-    /// those, so a bug here cannot remove somebody's Temp folder.
-    ///
-    /// It is skipped for a pattern-limited specification. Ticking "Cookies" removes cookie files;
-    /// it has no business also removing every empty folder that happens to sit in the same profile.
+    /// Removes empty folders left behind inside the spec's root. PathSafety keeps the root itself
+    /// out of reach. Skipped for pattern-limited specs, which have no claim on unrelated folders
+    /// in the same tree.
     /// </summary>
     private static void RemoveEmptyFolders(CleanupPath spec)
     {
@@ -205,7 +195,7 @@ public sealed class CleanupRunService
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                // Something is using it, or it stopped being empty. Leave it.
+                // In use, or no longer empty.
             }
         }
     }

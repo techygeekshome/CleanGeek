@@ -9,10 +9,7 @@ public sealed record ScanReport(IReadOnlyList<ScanFinding> Findings, IReadOnlyLi
         Findings.FirstOrDefault(f => f.TargetId == targetId) ?? ScanFinding.Empty(targetId);
 }
 
-/// <summary>
-/// Measures. It opens nothing, changes nothing and deletes nothing - the scan and the clean are
-/// two separate steps, always, and this is the first of them.
-/// </summary>
+/// <summary>Measures what each target would remove. Changes and deletes nothing.</summary>
 public sealed class CleanupScanService
 {
     public ScanReport Scan()
@@ -43,7 +40,7 @@ public sealed class CleanupScanService
                     }
                     catch (FileNotFoundException)
                     {
-                        // Something removed it between the listing and the question. Not an error.
+                        // Removed between the listing and the size query.
                     }
                     catch (IOException)
                     {
@@ -60,10 +57,7 @@ public sealed class CleanupScanService
         return new ScanReport(findings, unreadable);
     }
 
-    /// <summary>
-    /// Lists the files a target covers. A folder that does not exist is the normal case, not a
-    /// problem - most machines do not have a Windows.old or a Brave profile.
-    /// </summary>
+    /// <summary>Lists the files a target covers. A missing folder is the normal case, not an error.</summary>
     internal static IEnumerable<FileInfo> Enumerate(CleanupPath spec, List<string> unreadable)
     {
         DirectoryInfo dir;
@@ -78,11 +72,9 @@ public sealed class CleanupScanService
             yield break;
         }
 
-        // Two deliberate choices. Skipping reparse points stops a junction or symlink planted in
-        // a cache folder from walking the enumeration out into the rest of the disk - .NET both
-        // excludes the link itself and refuses to recurse through it. And setting AttributesToSkip
-        // explicitly REPLACES the default of Hidden | System, which is wanted: thumbcache files
-        // and the memory dump are hidden, and skipping them would quietly under-report.
+        // Reparse points are skipped so a junction or symlink in a cache folder cannot walk the
+        // enumeration out into the rest of the disk. Setting AttributesToSkip replaces the default
+        // of Hidden | System, which is intended: thumbcache files and the memory dump are hidden.
         var options = new EnumerationOptions
         {
             RecurseSubdirectories = spec.Recursive,
@@ -123,8 +115,8 @@ public sealed class CleanupScanService
         }
         finally
         {
-            // A consumer that stops early would otherwise leave the native find handle open,
-            // holding the very folder the cleaner is about to try to remove.
+            // A caller that stops early would otherwise leave the find handle open on a folder
+            // the cleaner is about to remove.
             walker.Dispose();
         }
     }

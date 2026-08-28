@@ -4,12 +4,8 @@ using CleanGeek.Core.Services;
 namespace CleanGeek.Services;
 
 /// <summary>
-/// Where each catalogue target actually lives on this machine.
-///
-/// This is the only place in CleanGeek that names a folder, and it is a fixed list. There are no
-/// wildcards over folders, no sweeps of the profile looking for things that look like rubbish,
-/// and nothing here is built from a pattern the user can type. Everything that comes out of here
-/// still goes through PathSafety before anything is deleted.
+/// Where each catalogue target lives on this machine. A fixed list: no folder wildcards and
+/// nothing built from user input. Everything here still goes through PathSafety before a delete.
 /// </summary>
 public static class KnownPaths
 {
@@ -19,14 +15,9 @@ public static class KnownPaths
     private static string SystemDrive => Path.GetPathRoot(WinDir) ?? @"C:\";
 
     /// <summary>
-    /// The user's Temp folder, checked before it is used as a deletion root.
-    ///
-    /// Path.GetTempPath() reads TMP, then TEMP, and when neither is set it falls back to the USER
-    /// PROFILE and then to the Windows folder. That fallback would hand this application the whole
-    /// of C:\Users\Sam as a recursive, ticked-by-default deletion root, which is the single worst
-    /// thing in this codebase that could happen. So the answer is only accepted when it actually
-    /// looks like a Temp folder; otherwise CleanGeek uses the real per-user one and cleans nothing
-    /// it was not sure about.
+    /// The user's Temp folder. Path.GetTempPath() falls back to the user profile when TMP and TEMP
+    /// are both unset, which would give a recursive delete root over the whole profile, so the
+    /// result is only used when it looks like a Temp folder.
     /// </summary>
     private static string UserTemp
     {
@@ -101,18 +92,15 @@ public static class KnownPaths
         "browser-form-data" => Browsers.SelectMany(b => b.FormData).ToList(),
         "browser-download-list" => Browsers.SelectMany(b => b.DownloadList).ToList(),
 
-        // The Recycle Bin is not a folder CleanGeek walks. Windows owns it, and the shell has an
-        // API for both the size and the emptying - see RecycleBin.cs.
+        // The bin is not walked as a folder; the shell API handles size and emptying. See RecycleBin.cs.
         Catalogue.RecycleBinId => [],
 
         _ => []
     };
 
     /// <summary>
-    /// Every distinct folder a target may touch. Used for reporting, not for authorising a
-    /// deletion - the cleaner asks PathSafety about one file against one specification, so that a
-    /// target whose root is the Windows folder (the memory dump) cannot authorise anything else
-    /// underneath it.
+    /// Every distinct folder a target may touch. For reporting only; deletes are authorised per
+    /// file against a single spec.
     /// </summary>
     public static IReadOnlyList<string> RootsFor(string targetId) =>
         For(targetId).Select(p => p.Root).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
@@ -125,10 +113,8 @@ public static class KnownPaths
         IReadOnlyList<CleanupPath> DownloadList);
 
     /// <summary>
-    /// Chromium keeps history, downloads and form data in the same SQLite files, so "download
-    /// history" and "browsing history" overlap on disk. CleanGeek does not pretend otherwise: the
-    /// download list is a row inside History, and deleting the file takes both. That is what the
-    /// cost line on the target says, and it is why the two are separate ticks rather than one.
+    /// Per-browser profile paths. Chromium stores the download list inside the History file, so
+    /// DownloadList is empty and clearing history takes both.
     /// </summary>
     private static IReadOnlyList<BrowserProfile> Browsers
     {
