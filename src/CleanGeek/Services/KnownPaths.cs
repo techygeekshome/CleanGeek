@@ -1,12 +1,7 @@
+using CleanGeek.Core.Models;
 using CleanGeek.Core.Services;
 
 namespace CleanGeek.Services;
-
-/// <summary>One folder a target is allowed to work in, and what inside it counts.</summary>
-/// <param name="Root">The folder. Everything CleanGeek touches must be underneath it.</param>
-/// <param name="Pattern">A file pattern, or "*" for everything.</param>
-/// <param name="Recursive">Whether to go into subfolders.</param>
-public sealed record CleanupPath(string Root, string Pattern = "*", bool Recursive = true);
 
 /// <summary>
 /// Where each catalogue target actually lives on this machine.
@@ -23,11 +18,35 @@ public static class KnownPaths
     private static string WinDir => Environment.GetFolderPath(Environment.SpecialFolder.Windows);
     private static string SystemDrive => Path.GetPathRoot(WinDir) ?? @"C:\";
 
+    /// <summary>
+    /// The user's Temp folder, checked before it is used as a deletion root.
+    ///
+    /// Path.GetTempPath() reads TMP, then TEMP, and when neither is set it falls back to the USER
+    /// PROFILE and then to the Windows folder. That fallback would hand this application the whole
+    /// of C:\Users\Sam as a recursive, ticked-by-default deletion root, which is the single worst
+    /// thing in this codebase that could happen. So the answer is only accepted when it actually
+    /// looks like a Temp folder; otherwise CleanGeek uses the real per-user one and cleans nothing
+    /// it was not sure about.
+    /// </summary>
+    private static string UserTemp
+    {
+        get
+        {
+            var reported = Path.GetTempPath().TrimEnd('\\');
+            var parts = reported.Split('\\', StringSplitOptions.RemoveEmptyEntries);
+
+            var looksRight = parts.Length >= 3
+                             && string.Equals(parts[^1], "Temp", StringComparison.OrdinalIgnoreCase);
+
+            return looksRight ? reported : Path.Combine(Local, "Temp");
+        }
+    }
+
     public static IReadOnlyList<CleanupPath> For(string targetId) => targetId switch
     {
         "temp-user" =>
         [
-            new CleanupPath(Path.GetTempPath().TrimEnd('\\'))
+            new CleanupPath(UserTemp)
         ],
 
         "temp-windows" =>
@@ -90,9 +109,10 @@ public static class KnownPaths
     };
 
     /// <summary>
-    /// MEMORY.DMP sits directly in the Windows folder, which PathSafety refuses as a root. The
-    /// allowed root for a single named file is the file's own folder plus that exact name, so the
-    /// scan hands PathSafety the file's parent and the run only ever asks about that one file.
+    /// Every distinct folder a target may touch. Used for reporting, not for authorising a
+    /// deletion - the cleaner asks PathSafety about one file against one specification, so that a
+    /// target whose root is the Windows folder (the memory dump) cannot authorise anything else
+    /// underneath it.
     /// </summary>
     public static IReadOnlyList<string> RootsFor(string targetId) =>
         For(targetId).Select(p => p.Root).Distinct(StringComparer.OrdinalIgnoreCase).ToList();

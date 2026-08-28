@@ -78,6 +78,11 @@ public sealed class CleanupScanService
             yield break;
         }
 
+        // Two deliberate choices. Skipping reparse points stops a junction or symlink planted in
+        // a cache folder from walking the enumeration out into the rest of the disk - .NET both
+        // excludes the link itself and refuses to recurse through it. And setting AttributesToSkip
+        // explicitly REPLACES the default of Hidden | System, which is wanted: thumbcache files
+        // and the memory dump are hidden, and skipping them would quietly under-report.
         var options = new EnumerationOptions
         {
             RecurseSubdirectories = spec.Recursive,
@@ -97,23 +102,30 @@ public sealed class CleanupScanService
             yield break;
         }
 
-        while (true)
+        try
         {
-            FileInfo current;
-            try
+            while (true)
             {
-                if (!walker.MoveNext()) break;
-                current = walker.Current;
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                unreadable.Add(spec.Root);
-                break;
-            }
+                FileInfo current;
+                try
+                {
+                    if (!walker.MoveNext()) break;
+                    current = walker.Current;
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    unreadable.Add(spec.Root);
+                    break;
+                }
 
-            yield return current;
+                yield return current;
+            }
         }
-
-        walker.Dispose();
+        finally
+        {
+            // A consumer that stops early would otherwise leave the native find handle open,
+            // holding the very folder the cleaner is about to try to remove.
+            walker.Dispose();
+        }
     }
 }
