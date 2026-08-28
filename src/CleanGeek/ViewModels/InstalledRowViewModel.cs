@@ -11,11 +11,7 @@ public sealed class InstalledRowViewModel(InstalledApp app) : ObservableObject
     public string Publisher => App.Publisher.Length > 0 ? App.Publisher : "Publisher not recorded";
     public string Version => App.Version.Length > 0 ? App.Version : "";
 
-    /// <summary>
-    /// Windows records a size for some applications and not for others, and the number it records
-    /// is what the installer claimed rather than a measurement. Saying so is better than showing
-    /// a confident zero.
-    /// </summary>
+    /// <summary>The installer's claimed size, which Windows often does not record at all.</summary>
     public string Size => App.SizeUnknown ? "size not recorded" : ByteSize.Format(App.EstimatedBytes);
 
     public string Installed => App.InstalledOn is { } d ? d.ToString("d MMM yyyy") : "";

@@ -101,7 +101,7 @@ public sealed class ShellViewModel : ObservableObject
 
     public bool Scanned { get => _scanned; private set => Set(ref _scanned, value); }
 
-    /// <summary>True while the confirmation strip is up, waiting for a yes or a cancel.</summary>
+    /// <summary>True while the confirmation strip is showing.</summary>
     public bool Confirming { get => _confirming; private set => Set(ref _confirming, value); }
 
     public string StatusLine { get => _statusLine; private set => Set(ref _statusLine, value); }
@@ -116,10 +116,7 @@ public sealed class ShellViewModel : ObservableObject
     public long SelectedBytes =>
         SizeReport.Selected(Targets.Select(t => t.Finding).ToList(), ActionableIds());
 
-    /// <summary>
-    /// The list is built once and reused, so a scan updates the numbers on rows the person has
-    /// already ticked rather than throwing their choices away.
-    /// </summary>
+    /// <summary>Builds the row list once; a scan updates the rows in place so ticks are kept.</summary>
     private void BuildTargetRows()
     {
         var selected = Catalogue.Resolve(_settings.Current.Selected);
@@ -137,9 +134,8 @@ public sealed class ShellViewModel : ObservableObject
 
     private void OnTickChanged()
     {
-        // What is SAVED is everything ticked, including the machine-wide rows this run cannot
-        // touch - the choice is still the person's, and it should survive a restart as
-        // administrator. What is ACTED ON is only what can actually be cleaned.
+        // Save every tick, including machine-wide rows this run cannot touch, so the choice
+        // survives a restart as administrator. Only actionable rows are cleaned.
         _settings.Current.Selected = Targets.Where(t => t.Ticked).Select(t => t.Id).ToList();
         _settings.Save();
 
@@ -161,9 +157,7 @@ public sealed class ShellViewModel : ObservableObject
 
         try
         {
-            // Off the UI thread: a scan that walks Temp, four browser profiles and a Windows.old
-            // takes minutes, and a frozen window is one Windows offers to close for you - which,
-            // during a clean, would mean killing the process mid-delete.
+            // Off the UI thread: a full scan can take minutes.
             var report = await Task.Run(() => _scanner.Scan());
 
             foreach (var row in Targets)
@@ -210,8 +204,7 @@ public sealed class ShellViewModel : ObservableObject
         {
             var ticked = ActionableIds();
 
-            // Bulk means more than one target going at once. It is what keeps the Recycle Bin
-            // out of a sweep: emptying it is only allowed when it is the one thing chosen.
+            // Bulk keeps the Recycle Bin out of a sweep; it may only be emptied on its own.
             var bulk = ticked.Count > 1;
             var report = await Task.Run(() => _cleaner.Clean(ticked, bulk));
 
