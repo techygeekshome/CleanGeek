@@ -18,6 +18,28 @@
         </StackPanel>
       </Border>
 
+      <!-- The confirmation. Not a pop-up: it appears where the numbers are, so what you are
+           agreeing to is on screen next to the button you agreed with. -->
+      <Border Background="{StaticResource Panel2}" BorderBrush="{StaticResource Amber}"
+              BorderThickness="1" CornerRadius="7" Padding="16,14"
+              IsVisible="{Binding Confirming}">
+        <StackPanel Spacing="11">
+          <TextBlock Text="{Binding ConfirmLine}" FontSize="13" TextWrapping="Wrap"
+                     FontWeight="SemiBold" />
+          <StackPanel Orientation="Horizontal" Spacing="9">
+            <Button Command="{Binding ConfirmCleanCommand}"
+                    Background="{StaticResource Blue}" Foreground="{StaticResource Txt}"
+                    BorderThickness="0" CornerRadius="7" Padding="15,8" FontSize="13"
+                    Content="Yes, remove these" />
+            <Button Command="{Binding CancelCleanCommand}"
+                    Background="{StaticResource ButtonBg}" Foreground="{StaticResource Txt2}"
+                    BorderBrush="{StaticResource ButtonBorder}" BorderThickness="1"
+                    CornerRadius="7" Padding="15,8" FontSize="13"
+                    Content="Cancel" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
       <Border Background="{StaticResource Panel2}" BorderBrush="{StaticResource Line2}"
               BorderThickness="1" CornerRadius="7" Padding="16,13"
               IsVisible="{Binding HasCleaned}">
