@@ -13,7 +13,7 @@
 [![Made by TechyGeeksHome](https://img.shields.io/badge/made%20by-TechyGeeksHome-b191f2)](https://techygeekshome.info)
 [![Support on Ko-fi](https://img.shields.io/badge/support-Ko--fi-ff5e5b)](https://ko-fi.com/techygeekshome)
 
-[What it does](#what-it-does) · [What it refuses to do](#what-it-refuses-to-do) · [Getting it running](#getting-it-running) · [Build from source](#build-from-source) · [Licence](#licence)
+[What it does](#what-it-does) · [Screenshots](#screenshots) · [What it refuses to do](#what-it-refuses-to-do) · [Getting it running](#getting-it-running) · [Build from source](#build-from-source) · [Licence](#licence)
 
 </div>
 
@@ -88,6 +88,32 @@ CleanGeek stays in its lane. The rest of the range already covers the neighbouri
 | See what is eating your disk, visually | [DiskGeek](https://github.com/techygeekshome/DiskGeek) |
 | Update your installed software | [AppGeek](https://github.com/techygeekshome/AppGeek) |
 | Update your drivers | [DriverGeek](https://github.com/techygeekshome/DriverGeek) |
+
+## Screenshots
+
+<div align="center">
+
+**Clean** — measures first, and removes only what you tick.
+
+<img src="docs/screenshots/clean.png" alt="The Clean screen, showing what each item is worth before anything is removed" width="820">
+
+**The confirmation** — what is about to go, in words, before it goes.
+
+<img src="docs/screenshots/confirm.png" alt="The confirmation strip naming exactly what is about to be removed" width="820">
+
+**Installed** — everything installed, uninstalled through the publisher's own uninstaller.
+
+<img src="docs/screenshots/installed.png" alt="The Installed screen" width="820">
+
+**Startup** — what starts with Windows, and what to leave alone.
+
+<img src="docs/screenshots/startup.png" alt="The Startup screen" width="820">
+
+**Settings** — including a plain list of what CleanGeek will not do.
+
+<img src="docs/screenshots/settings.png" alt="The Settings screen" width="820">
+
+</div>
 
 ## Getting it running
 
