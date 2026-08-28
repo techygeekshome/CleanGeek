@@ -1,0 +1,70 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:CleanGeek.ViewModels"
+             x:Class="CleanGeek.Views.StartupView"
+             x:DataType="vm:ShellViewModel">
+  <ScrollViewer Padding="26,20">
+    <StackPanel Spacing="16">
+
+      <Border Background="{StaticResource Panel2}" BorderBrush="{StaticResource Line}"
+              BorderThickness="1" CornerRadius="7" Padding="16,14">
+        <StackPanel Spacing="3">
+          <TextBlock Text="What starts when Windows starts." FontWeight="SemiBold" FontSize="13" />
+          <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Txt3}"
+                     Text="There is no startup impact score here. Windows works that out over several boots from measurements CleanGeek cannot take, so any number shown here would be a guess wearing a lab coat. What it can honestly tell you is what each entry is, where it starts from, and when turning it off would be a bad idea." />
+          <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,3,0,0" Foreground="{StaticResource Txt4}"
+                     Text="CleanGeek 1.0 reports; it does not switch anything off. Use Task Manager, Startup apps, for that until 1.1. Sign-in scheduled tasks are not listed yet either." />
+        </StackPanel>
+      </Border>
+
+      <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}"
+              BorderThickness="1" CornerRadius="7">
+        <StackPanel>
+          <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="17,13">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Text="Startup entries" FontWeight="SemiBold" />
+              <TextBlock Grid.Column="1" FontSize="11.5" Foreground="{StaticResource Txt3}"
+                         Text="{Binding StartupOnCount, StringFormat='{}{0} currently on'}" />
+            </Grid>
+          </Border>
+
+          <ItemsControl ItemsSource="{Binding Startup}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:StartupRowViewModel">
+                <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="17,13">
+                  <Grid ColumnDefinitions="*,180,110,60">
+                    <StackPanel>
+                      <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                      <TextBlock Text="{Binding Command}" FontSize="11.5" Margin="0,3,0,0"
+                                 FontFamily="{StaticResource MonoFont}" TextWrapping="Wrap"
+                                 Foreground="{StaticResource Txt4}" />
+                      <TextBlock Text="{Binding KeepReason}" FontSize="12" Margin="0,3,0,0"
+                                 IsVisible="{Binding ShouldKeep}" TextWrapping="Wrap"
+                                 Foreground="{StaticResource Amber}" />
+                    </StackPanel>
+
+                    <TextBlock Grid.Column="1" Text="{Binding Where}" FontSize="12"
+                               HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,0,0"
+                               Foreground="{StaticResource Txt3}" />
+
+                    <TextBlock Grid.Column="2" Text="{Binding KeepTag}" FontSize="10.5" FontWeight="Bold"
+                               HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,0,0"
+                               Foreground="{StaticResource Amber}" />
+
+                    <TextBlock Grid.Column="3" Text="{Binding State}" FontSize="11.5" FontWeight="Bold"
+                               HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,0,0"
+                               Foreground="{StaticResource Txt2}" />
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <TextBlock IsVisible="{Binding !StartupCount}" Padding="17,22" FontSize="12.5"
+                     Foreground="{StaticResource Txt3}" TextWrapping="Wrap"
+                     Text="Nothing starts with Windows on this PC beyond what Windows starts itself. That is unusual and it is good news." />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

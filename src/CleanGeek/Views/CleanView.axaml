@@ -1,0 +1,106 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:CleanGeek.ViewModels"
+             x:Class="CleanGeek.Views.CleanView"
+             x:DataType="vm:ShellViewModel">
+  <ScrollViewer Padding="26,20">
+    <StackPanel Spacing="16">
+
+      <Border Background="{StaticResource Panel2}" BorderBrush="{StaticResource Line}"
+              BorderThickness="1" CornerRadius="7" Padding="16,14">
+        <StackPanel Spacing="3">
+          <TextBlock Text="{Binding Headline}" FontWeight="SemiBold" FontSize="13"
+                     IsVisible="{Binding Scanned}" />
+          <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Txt3}"
+                     Text="Two steps, always. Scan measures and changes nothing; Clean removes only what you have ticked. Nothing on this screen is ticked for you except caches and temporary files." />
+          <TextBlock Text="{Binding ElevationNote}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"
+                     Foreground="{StaticResource Txt4}" />
+        </StackPanel>
+      </Border>
+
+      <!-- The confirmation. Not a pop-up: it appears where the numbers are, so what you are
+           agreeing to is on screen next to the button you agreed with. -->
+      <Border Background="{StaticResource Panel2}" BorderBrush="{StaticResource Amber}"
+              BorderThickness="1" CornerRadius="7" Padding="16,14"
+              IsVisible="{Binding Confirming}">
+        <StackPanel Spacing="11">
+          <TextBlock Text="{Binding ConfirmLine}" FontSize="13" TextWrapping="Wrap"
+                     FontWeight="SemiBold" />
+          <StackPanel Orientation="Horizontal" Spacing="9">
+            <Button Command="{Binding ConfirmCleanCommand}"
+                    Background="{StaticResource Blue}" Foreground="{StaticResource Txt}"
+                    BorderThickness="0" CornerRadius="7" Padding="15,8" FontSize="13"
+                    Content="Yes, remove these" />
+            <Button Command="{Binding CancelCleanCommand}"
+                    Background="{StaticResource ButtonBg}" Foreground="{StaticResource Txt2}"
+                    BorderBrush="{StaticResource ButtonBorder}" BorderThickness="1"
+                    CornerRadius="7" Padding="15,8" FontSize="13"
+                    Content="Cancel" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <Border Background="{StaticResource Panel2}" BorderBrush="{StaticResource Line2}"
+              BorderThickness="1" CornerRadius="7" Padding="16,13"
+              IsVisible="{Binding HasCleaned}">
+        <TextBlock Text="{Binding LastCleanLine}" FontSize="12.5" TextWrapping="Wrap"
+                   Foreground="{StaticResource GreenLight}" />
+      </Border>
+
+      <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}"
+              BorderThickness="1" CornerRadius="7">
+        <StackPanel>
+          <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="17,13">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Text="What CleanGeek is willing to delete" FontWeight="SemiBold" />
+              <TextBlock Grid.Column="1" FontSize="11.5" Foreground="{StaticResource Txt3}"
+                         Text="Tick what you want gone" />
+            </Grid>
+          </Border>
+
+          <ItemsControl ItemsSource="{Binding Targets}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:TargetRowViewModel">
+                <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="17,14">
+                  <Grid ColumnDefinitions="Auto,*,170,110">
+
+                    <CheckBox Grid.Column="0" IsChecked="{Binding Ticked}" VerticalAlignment="Top"
+                              Margin="0,-2,10,0" IsEnabled="{Binding !Blocked}" />
+
+                    <StackPanel Grid.Column="1">
+                      <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                      <TextBlock Text="{Binding What}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"
+                                 Foreground="{StaticResource Txt3}" />
+                      <TextBlock Text="{Binding Cost}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"
+                                 IsVisible="{Binding HasCost}"
+                                 Foreground="{StaticResource Amber}" />
+                      <TextBlock Text="{Binding BlockedNote}" FontSize="11.5" Margin="0,3,0,0" TextWrapping="Wrap"
+                                 IsVisible="{Binding Blocked}"
+                                 Foreground="{StaticResource Txt4}" />
+                    </StackPanel>
+
+                    <TextBlock Grid.Column="2" Text="{Binding RiskTag}" FontSize="10.5" FontWeight="Bold"
+                               HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,0,0"
+                               Foreground="{StaticResource Txt3}" />
+
+                    <StackPanel Grid.Column="3" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                Margin="0,1,0,0">
+                      <TextBlock Text="{Binding Size}" FontSize="13" FontWeight="SemiBold"
+                                 FontFamily="{StaticResource MonoFont}" HorizontalAlignment="Right" />
+                      <TextBlock Text="{Binding Detail}" FontSize="11" Margin="0,3,0,0"
+                                 HorizontalAlignment="Right" Foreground="{StaticResource Txt4}" />
+                    </StackPanel>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <TextBlock IsVisible="{Binding !Scanned}" Padding="17,22" FontSize="12.5"
+                     Foreground="{StaticResource Txt3}" TextWrapping="Wrap"
+                     Text="Press Scan to find out how much of this is actually on your PC. Most machines have less than the adverts suggest, and CleanGeek will tell you when the answer is 'not much'." />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

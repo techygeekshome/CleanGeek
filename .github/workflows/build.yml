@@ -1,0 +1,29 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # The whole solution builds on Linux. The application targets net8.0-windows and only
+      # RUNS on Windows, but EnableWindowsTargeting lets CI compile it here, and the policy
+      # layer under src/CleanGeek.Core is plain net8.0 with no platform dependency at all -
+      # which is why the tests can run on a cheap runner rather than needing a Windows one.
+      # For this application that split matters more than it did for DriverGeek: the rules
+      # about what may be deleted are the whole product, and they are proven on every push.
+      - name: Build
+        run: dotnet build CleanGeek.sln -c Release
+
+      - name: Test
+        run: dotnet run --project tests/CleanGeek.Tests -c Release --no-build

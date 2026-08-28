@@ -1,0 +1,87 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:CleanGeek.ViewModels"
+             x:Class="CleanGeek.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+  <ScrollViewer Padding="26,20">
+    <StackPanel Spacing="16">
+
+      <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}"
+              BorderThickness="1" CornerRadius="7">
+        <StackPanel>
+          <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="17,13">
+            <TextBlock Text="Scanning" FontWeight="SemiBold" />
+          </Border>
+
+          <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="17,14">
+            <Grid ColumnDefinitions="*,Auto">
+              <StackPanel MaxWidth="560" HorizontalAlignment="Left">
+                <TextBlock Text="Scan on a schedule" FontWeight="SemiBold" />
+                <TextBlock FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"
+                           Foreground="{StaticResource Txt3}" Text="{Binding SchedulePreview}" />
+              </StackPanel>
+              <ComboBox Grid.Column="1" MinWidth="190" VerticalAlignment="Center"
+                        ItemsSource="{Binding ScheduleOptions}"
+                        SelectedItem="{Binding ScanSchedule}" />
+            </Grid>
+          </Border>
+
+          <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="17,14">
+            <Grid ColumnDefinitions="*,Auto">
+              <StackPanel MaxWidth="560" HorizontalAlignment="Left">
+                <TextBlock Text="Ask before cleaning" FontWeight="SemiBold" />
+                <TextBlock FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"
+                           Foreground="{StaticResource Txt3}"
+                           Text="One confirmation listing what is about to go and how much it is. On by default." />
+              </StackPanel>
+              <ToggleSwitch Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding ConfirmBeforeCleaning}" />
+            </Grid>
+          </Border>
+
+          <Border Padding="17,14">
+            <Grid ColumnDefinitions="*,Auto">
+              <StackPanel MaxWidth="560" HorizontalAlignment="Left">
+                <TextBlock Text="Hide Windows components on the Installed screen" FontWeight="SemiBold" />
+                <TextBlock FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"
+                           Foreground="{StaticResource Txt3}"
+                           Text="Updates, runtimes and the entries Windows hides from Settings, Apps. On by default, because uninstalling one of them is almost always a mistake." />
+              </StackPanel>
+              <ToggleSwitch Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding HideSystemComponents}" />
+            </Grid>
+          </Border>
+        </StackPanel>
+      </Border>
+
+      <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}"
+              BorderThickness="1" CornerRadius="7">
+        <StackPanel>
+          <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="17,13">
+            <TextBlock Text="What CleanGeek will not do" FontWeight="SemiBold" />
+          </Border>
+
+          <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="17,14">
+            <StackPanel MaxWidth="700" HorizontalAlignment="Left">
+              <TextBlock Text="These are not settings" FontWeight="SemiBold" />
+              <TextBlock FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap" Foreground="{StaticResource Txt3}"
+                         Text="{Binding SafetyNote}" />
+            </StackPanel>
+          </Border>
+
+          <ItemsControl ItemsSource="{Binding NeverCleaned}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:RefusalViewModel">
+                <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="17,14">
+                  <StackPanel MaxWidth="700" HorizontalAlignment="Left">
+                    <TextBlock Text="{Binding Thing}" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding Why}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"
+                               Foreground="{StaticResource Txt3}" />
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

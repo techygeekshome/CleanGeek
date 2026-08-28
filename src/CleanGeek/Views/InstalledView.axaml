@@ -1,0 +1,70 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:CleanGeek.ViewModels"
+             x:Class="CleanGeek.Views.InstalledView"
+             x:DataType="vm:ShellViewModel">
+  <ScrollViewer Padding="26,20">
+    <StackPanel Spacing="16">
+
+      <Border Background="{StaticResource Panel2}" BorderBrush="{StaticResource Line}"
+              BorderThickness="1" CornerRadius="7" Padding="16,14">
+        <StackPanel Spacing="3">
+          <TextBlock Text="Everything installed on this PC, and who put it there."
+                     FontWeight="SemiBold" FontSize="13" />
+          <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Txt3}"
+                     Text="Uninstalling runs the publisher's own uninstaller. CleanGeek does not delete an application's files itself and does not hunt for leftovers to remove afterwards - the people who wrote the software know what it installed, and guessing is how a cleaner removes the wrong folder." />
+          <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,3,0,0" Foreground="{StaticResource Txt4}"
+                     Text="Store apps are not listed in 1.0. They are managed in Settings, Apps, and listing them properly needs the packaging APIs rather than a guess at a registry key." />
+        </StackPanel>
+      </Border>
+
+      <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}"
+              BorderThickness="1" CornerRadius="7">
+        <StackPanel>
+          <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="17,13">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Text="Installed applications" FontWeight="SemiBold" />
+              <TextBlock Grid.Column="1" FontSize="11.5" Foreground="{StaticResource Txt3}"
+                         Text="{Binding InstalledCount, StringFormat='{}{0} listed'}" />
+            </Grid>
+          </Border>
+
+          <ItemsControl ItemsSource="{Binding Installed}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:InstalledRowViewModel">
+                <Border BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1" Padding="17,13">
+                  <Grid ColumnDefinitions="*,140,120,110">
+                    <StackPanel>
+                      <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                      <TextBlock Text="{Binding Publisher}" FontSize="12" Margin="0,3,0,0"
+                                 Foreground="{StaticResource Txt3}" TextWrapping="Wrap" />
+                      <TextBlock Text="{Binding Note}" FontSize="11.5" Margin="0,3,0,0"
+                                 Foreground="{StaticResource Txt4}" TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <TextBlock Grid.Column="1" Text="{Binding Version}" FontSize="12"
+                               FontFamily="{StaticResource MonoFont}" HorizontalAlignment="Right"
+                               VerticalAlignment="Top" Margin="0,2,0,0" Foreground="{StaticResource Txt2}" />
+
+                    <TextBlock Grid.Column="2" Text="{Binding Installed}" FontSize="12"
+                               HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,0,0"
+                               Foreground="{StaticResource Txt3}" />
+
+                    <TextBlock Grid.Column="3" Text="{Binding Size}" FontSize="12"
+                               FontFamily="{StaticResource MonoFont}" HorizontalAlignment="Right"
+                               VerticalAlignment="Top" Margin="0,2,0,0" Foreground="{StaticResource Txt3}"
+                               TextWrapping="Wrap" TextAlignment="Right" />
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <TextBlock IsVisible="{Binding !InstalledCount}" Padding="17,22" FontSize="12.5"
+                     Foreground="{StaticResource Txt3}" TextWrapping="Wrap"
+                     Text="Nothing listed yet." />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
