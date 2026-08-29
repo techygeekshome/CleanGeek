@@ -7,13 +7,13 @@
 **Get your disk space back. Without a registry cleaner, and without being sold to.**
 
 [![Build](https://github.com/techygeekshome/CleanGeek/actions/workflows/build.yml/badge.svg)](https://github.com/techygeekshome/CleanGeek/actions/workflows/build.yml)
-[![Status](https://img.shields.io/badge/status-1.0%20in%20review-b7791f)](https://github.com/techygeekshome/CleanGeek)
+[![Version](https://img.shields.io/github/v/release/techygeekshome/CleanGeek?label=version&color=4c9bff)](https://github.com/techygeekshome/CleanGeek/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078d4)](#getting-it-running)
 [![License](https://img.shields.io/badge/License-GPL--3.0-blue)](LICENSE)
 [![Made by TechyGeeksHome](https://img.shields.io/badge/made%20by-TechyGeeksHome-b191f2)](https://techygeekshome.info)
 [![Support on Ko-fi](https://img.shields.io/badge/support-Ko--fi-ff5e5b)](https://ko-fi.com/techygeekshome)
 
-[What it does](#what-it-does) · [Screenshots](#screenshots) · [What it refuses to do](#what-it-refuses-to-do) · [Getting it running](#getting-it-running) · [Build from source](#build-from-source) · [Licence](#licence)
+[Download](#download--run) · [What it does](#what-it-does) · [Screenshots](#screenshots) · [What it refuses to do](#what-it-refuses-to-do) · [Build from source](#build-from-source) · [Licence](#licence)
 
 </div>
 
@@ -61,6 +61,8 @@ This is the other category with a deservedly poor reputation, so again, plainly:
 - 🚀 **Shows what starts with Windows**, and which entries you should leave alone.
 - ⏰ **Scheduled scan** — it measures on a schedule and writes the result to the log. It never
   deletes on a schedule; there is no command line that can.
+- ℹ️ **About and Check for updates** — the same two buttons every TechyGeeksHome tool has, at the
+  foot of the sidebar. The update check runs only when you press it.
 - 🔒 **Skips anything in use** — nothing is removed from under a running process.
 
 ### Where 1.0 stops
@@ -115,11 +117,42 @@ CleanGeek stays in its lane. The rest of the range already covers the neighbouri
 
 </div>
 
-## Getting it running
+## Download & run
 
-CleanGeek has not had a public release yet, so there is nothing to download at the moment. When
-there is, this section will carry the installer and the portable build, both with published
-SHA-256 hashes.
+**[⬇ Download CleanGeek 1.0](https://github.com/techygeekshome/CleanGeek/releases/latest)** — Windows 10 or 11, 64-bit.
+
+| File | What it is | Size |
+| --- | --- | --- |
+| `CleanGeekSetup.exe` | Installer. Start-menu entry, uninstalls cleanly. | 29.1 MB |
+| `CleanGeek-portable.exe` | One file. Run it from anywhere, install nothing. | 86.5 MB |
+| `SHA256SUMS.txt` | Checksums for both, published with every release. | — |
+
+Nothing else needs installing — .NET is inside the executable.
+
+To verify what you downloaded, in PowerShell:
+
+```powershell
+Get-FileHash .\CleanGeekSetup.exe -Algorithm SHA256
+```
+
+and compare it against the line in `SHA256SUMS.txt`.
+
+> **First run:** Windows may show a blue *"Windows protected your PC"* box. That is SmartScreen
+> reacting to an executable it has not seen before, not a detection — CleanGeek is not code-signed,
+> because a certificate costs more per year than this whole range earns. Click **More info** →
+> **Run anyway**. The published SHA-256 is there so you never have to take that on trust.
+
+## On the one network call
+
+CleanGeek makes exactly one network request, and only when you press **Check for updates**: a
+single unauthenticated GET to GitHub's public releases API, asking whether there is a newer tag
+than the build you are running. It sends no machine identifier, no record of what you scanned
+and no usage data — GitHub sees an IP address and a user agent, exactly as it would if you
+opened the releases page in a browser. It never downloads or installs anything; if there is a
+newer version it offers you the release page, and that is all.
+
+Nothing is requested when the app starts. Open it, use it, close it, and it makes no network
+connection at all.
 
 ## Build from source
 

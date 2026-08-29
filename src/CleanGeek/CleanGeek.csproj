@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CleanGeek.Core\CleanGeek.Core.csproj" />
+    <ProjectReference Include="..\TechyGeeksHome.Common\TechyGeeksHome.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>
