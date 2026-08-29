@@ -58,7 +58,6 @@ public sealed class ShellViewModel : ObservableObject
     public string BrandName => AppInfo.Name;
     public string BrandBy => "by " + AppInfo.By;
     public string VersionText => AppInfo.Version + " · portable";
-    public string NetworkPromise => AppInfo.NetworkPromise;
     public string SafetyNote => AppSettings.SafetyNote;
 
     public bool IsElevated => Elevation.IsElevated;
