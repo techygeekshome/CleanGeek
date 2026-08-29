@@ -119,7 +119,7 @@ CleanGeek stays in its lane. The rest of the range already covers the neighbouri
 
 ## Download & run
 
-**[⬇ Download CleanGeek 1.0](https://github.com/techygeekshome/CleanGeek/releases/latest)** — Windows 10 or 11, 64-bit.
+**[⬇ Download CleanGeek](https://github.com/techygeekshome/CleanGeek/releases/latest)** — Windows 10 or 11, 64-bit.
 
 | File | What it is | Size |
 | --- | --- | --- |
