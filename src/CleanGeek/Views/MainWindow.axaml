@@ -73,15 +73,6 @@
         </StackPanel>
 
         <StackPanel DockPanel.Dock="Bottom" Spacing="10">
-          <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}"
-                  BorderThickness="1" CornerRadius="7" Padding="12,11">
-            <StackPanel Spacing="6">
-              <TextBlock Text="{Binding NetworkPromise}" FontSize="12" TextWrapping="Wrap"
-                         Foreground="{StaticResource Txt2}" />
-              <TextBlock Text="{Binding SafetyNote}" FontSize="11" TextWrapping="Wrap"
-                         Foreground="{StaticResource Txt4}" />
-            </StackPanel>
-          </Border>
           <StackPanel Spacing="6">
             <Button x:Name="CheckUpdatesButton" Classes="ghost" Content="Check for updates" />
             <Button x:Name="AboutButton" Classes="ghost" Content="About" />
