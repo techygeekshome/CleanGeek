@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>cleangeek</id>
+    <version>1.0.4</version>
+    <title>CleanGeek</title>
+    <authors>TechyGeeksHome</authors>
+    <owners>techygeekshome</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">GPL-3.0-or-later</license>
+    <projectUrl>https://techygeekshome.info/cleangeek/</projectUrl>
+    <iconUrl>https://cdn.jsdelivr.net/gh/techygeekshome/CleanGeek@2054e202e0047eefbdaffe36053c1aee06472474/icons/cleangeek.png</iconUrl>
+    <description>CleanGeek recovers real disk space from the places Windows quietly fills up: browser and
+application caches, temporary files, crash dumps, delivery optimisation files and Windows Update
+leftovers.
+
+* See what each category will free before anything is deleted
+* Clean per-category rather than all-or-nothing
+* Windows Update leftovers and old servicing files, which are usually the biggest win
+* Deliberately has NO registry cleaner - they do not free meaningful space and they do break things
+* No account, no adverts, no bundled offers
+
+Open source under GPL-3.0. The .NET 8 runtime is bundled, so there is nothing to install first.</description>
+    <summary>Free disk cleaner for Windows that recovers real space, with no registry cleaner</summary>
+    <releaseNotes>https://github.com/techygeekshome/CleanGeek/releases/tag/v1.0.4</releaseNotes>
+    <copyright>Copyright (c) 2026 TechyGeeksHome</copyright>
+    <tags>cleangeek disk-cleanup temp-files cache cleaner windows foss</tags>
+    <projectSourceUrl>https://github.com/techygeekshome/CleanGeek</projectSourceUrl>
+    <packageSourceUrl>https://github.com/techygeekshome/CleanGeek</packageSourceUrl>
+    <docsUrl>https://techygeekshome.info/cleangeek/</docsUrl>
+    <bugTrackerUrl>https://github.com/techygeekshome/CleanGeek/issues</bugTrackerUrl>
+  </metadata>
+</package>
