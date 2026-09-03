@@ -19,6 +19,14 @@
 
 ---
 
+## 🎬 See it in action
+
+[![CleanGeek demo video](https://img.youtube.com/vi/Z2s2p3nkIvY/maxresdefault.jpg)](https://www.youtube.com/watch?v=Z2s2p3nkIvY)
+
+What it finds and what it will not touch, in under a minute.
+
+---
+
 There are gigabytes on a typical Windows machine that nothing needs: Windows Update leftovers,
 the delivery-optimisation cache, crash dumps, thumbnail and icon caches, per-browser caches, and
 the memory dump from a blue screen nobody is going to analyse. CleanGeek finds them, tells you
